@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-blue: #042354;
+  --color-brand-yellow: #FAD634;
+  --color-brand-white: #FFFFFF;
+  --color-brand-surface: #F5F6FA;
+  --color-brand-border: #E8EAF0;
+  --color-brand-muted: #9CA3AF;
+  --color-brand-slate: #6B7280;
+  --color-brand-success: #22C55E;
+  --color-brand-error: #EF4444;
+  --color-brand-warning: #F59E0B;
+  --color-brand-info: #3B82F6;
+  --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
+  --font-sans: 'Montserrat', sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-brand-surface);
+  color: var(--color-brand-blue);
+  font-family: var(--font-sans);
+}
+
+.pattern-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent);
+}
+
+.pattern-orbits {
+  background:
+    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, 0.16) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 20%, rgba(250, 214, 52, 0.18) 0 2px, transparent 3px),
+    radial-gradient(circle at 40% 64%, rgba(255, 255, 255, 0.12) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 78%, rgba(250, 214, 52, 0.16) 0 2px, transparent 3px);
+}
+
+.pattern-beams {
+  background:
+    linear-gradient(115deg, transparent 0 18%, rgba(255, 255, 255, 0.045) 20%, transparent 24%),
+    linear-gradient(90deg, transparent 0 48%, rgba(250, 214, 52, 0.06) 50%, transparent 52%),
+    linear-gradient(180deg, transparent 0 78%, rgba(59, 130, 246, 0.08) 82%, transparent 88%);
+}
+
+.pattern-wave {
+  background:
+    radial-gradient(ellipse at 10% 100%, rgba(255, 255, 255, 0.07), transparent 55%),
+    radial-gradient(ellipse at 45% 110%, rgba(250, 214, 52, 0.08), transparent 48%),
+    radial-gradient(ellipse at 85% 100%, rgba(255, 255, 255, 0.06), transparent 52%);
+}
+
+.particle {
+  position: absolute;
+  height: 10px;
+  width: 10px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(250, 214, 52, 0.95), rgba(250, 214, 52, 0.15));
+  box-shadow: 0 0 18px rgba(250, 214, 52, 0.45);
+  opacity: 0.76;
+  will-change: transform;
+}
+
+.orbital-ring {
+  position: absolute;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(250, 214, 52, 0.04),
+    0 0 45px rgba(4, 35, 84, 0.18);
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.96);
+    opacity: 0.72;
+  }
+  25% {
+    transform: translate3d(var(--particle-x1, 10px), var(--particle-y1, -10px), 0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate3d(var(--particle-x2, 22px), var(--particle-y2, -20px), 0) scale(1.04);
+    opacity: 0.86;
+  }
+  75% {
+    transform: translate3d(var(--particle-x3, 12px), var(--particle-y3, -30px), 0) scale(0.99);
+    opacity: 0.82;
+  }
+  100% {
+    transform: translate3d(var(--particle-x4, -6px), var(--particle-y4, -16px), 0) scale(0.96);
+    opacity: 0.74;
+  }
+}
+
+@keyframes rotate-drift {
+  0% {
+    transform: rotate(0deg) translateY(0);
+    opacity: 0.18;
+  }
+  50% {
+    transform: rotate(180deg) translateY(-8px);
+    opacity: 0.28;
+  }
+  100% {
+    transform: rotate(360deg) translateY(0);
+    opacity: 0.18;
+  }
+}
+
+@keyframes soft-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-float-particle {
+  animation-name: float-particle;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.animate-rotate-drift {
+  animation-name: rotate-drift;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.animate-soft-reveal {
+  animation: soft-reveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
