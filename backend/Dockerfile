@@ -33,7 +33,9 @@ RUN composer install \
 
 COPY . .
 
-RUN mkdir -p storage/framework/cache/data \
+RUN composer dump-autoload --optimize --classmap-authoritative \
+    && php artisan package:discover --ansi \
+    && mkdir -p storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
@@ -42,4 +44,4 @@ RUN mkdir -p storage/framework/cache/data \
 
 EXPOSE 10000
 
-CMD sh -c "php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"
+CMD sh -c "php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"

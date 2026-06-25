@@ -24,9 +24,38 @@ body,
 }
 
 body {
-  background: var(--color-brand-surface);
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.96), rgba(245, 246, 250, 0.98) 42%, rgba(233, 238, 247, 1) 100%);
   color: var(--color-brand-blue);
   font-family: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+*::selection {
+  background: rgba(59, 130, 246, 0.18);
+  color: var(--color-brand-blue);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.9);
+  border: 2px solid rgba(226, 232, 240, 0.6);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.95);
 }
 
 .pattern-grid {
