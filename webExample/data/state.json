@@ -1,0 +1,48 @@
+{
+  "pendientes": {
+    "resultados": [
+      {
+        "id": 1,
+        "alumno": "Alumno 01",
+        "curso": "Curso A",
+        "nota": 18
+      }
+    ],
+    "certificados": [
+      {
+        "id": 1,
+        "alumno": "Alumno 02",
+        "programa": "Programa X"
+      }
+    ],
+    "fechas": [
+      {
+        "id": 1,
+        "programa": "Programa Y",
+        "fecha_inicio": "2026-07-01",
+        "fecha_fin": "2026-07-30"
+      }
+    ],
+    "evaluaciones": [
+      {
+        "id": 1,
+        "curso": "Curso B",
+        "tipo": "Final"
+      }
+    ],
+    "notas": [
+      {
+        "id": 1,
+        "alumno": "Alumno 03",
+        "curso": "Curso C",
+        "nota_actual": 12,
+        "nota_nueva": 16
+      }
+    ]
+  },
+  "resultados": [],
+  "certificados": [],
+  "fechas": [],
+  "evaluaciones": [],
+  "notas": []
+}

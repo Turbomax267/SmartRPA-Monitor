@@ -1,23 +1,37 @@
 import { ArrowRight, Bot, Play, ShieldCheck } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { getRpaRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { executionCatalog, getRpaById, incidentCatalog } from '../mocks/monitorData'
 
 export function RpaDetailPage() {
   const { rpaId } = useParams()
-  const rpa = getRpaById(rpaId)
+  const [rpa, setRpa] = useState<any | null>(null)
   const [activeTab, setActiveTab] = useState<'Resumen' | 'Ejecuciones' | 'Incidentes'>('Resumen')
 
+  useEffect(() => {
+    const load = async () => {
+      if (!rpaId) return
+      const response = await getRpaRequest(rpaId)
+      setRpa(response.data)
+    }
+
+    void load()
+  }, [rpaId])
+
+  if (!rpa) {
+    return <div className="text-sm text-slate-400">Cargando RPA...</div>
+  }
+
   const relatedExecutions = useMemo(
-    () => executionCatalog.filter((execution) => execution.rpaId === rpa.id).slice(0, 5),
-    [rpa.id],
+    () => (rpa.executions ?? []).slice(0, 5),
+    [rpa],
   )
   const relatedIncidents = useMemo(
-    () => incidentCatalog.filter((incident) => incident.rpaId === rpa.id).slice(0, 5),
-    [rpa.id],
+    () => (rpa.incidentBreakdown ?? []).map((item: any, index: number) => ({ ...item, id: `${index}`, code: item.label, severity: 'MEDIUM', status: 'IN_REVIEW', detectedAt: `${item.total} casos` })).slice(0, 5),
+    [rpa],
   )
 
   return (

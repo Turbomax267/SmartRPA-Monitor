@@ -27,7 +27,7 @@ export function LoginPage() {
       await login({ email, password }, { remember })
       navigate('/dashboard', { replace: true })
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesiÃ³n.'
+      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesion.'
       const responseErrors =
         typeof error === 'object' &&
         error !== null &&
@@ -71,7 +71,7 @@ export function LoginPage() {
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-brand-blue">Correo electrÃ³nico</label>
+              <label className="mb-2 block text-sm font-semibold text-brand-blue">Correo electronico</label>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
                 <Mail size={18} className="text-slate-400" />
                 <input
@@ -86,7 +86,7 @@ export function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-brand-blue">ContraseÃ±a</label>
+              <label className="mb-2 block text-sm font-semibold text-brand-blue">Contrasena</label>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
                 <LockKeyhole size={18} className="text-slate-400" />
                 <input
@@ -94,7 +94,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="w-full bg-transparent py-4 text-sm text-brand-blue outline-none placeholder:text-slate-400"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="************"
                 />
                 <button
                   type="button"
@@ -119,7 +119,7 @@ export function LoginPage() {
                 />
                 Recordarme
               </label>
-              <span className="text-brand-info">Â¿Olvidaste tu contraseÃ±a?</span>
+              <span className="text-brand-info">Olvidaste tu contrasena?</span>
             </div>
 
             {errorMessage && (
@@ -133,11 +133,11 @@ export function LoginPage() {
               disabled={isSubmitting}
               className="flex w-full items-center justify-center rounded-2xl bg-brand-blue px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#0A2D67] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? 'Validando acceso...' : 'Iniciar sesiÃ³n'}
+              {isSubmitting ? 'Validando acceso...' : 'Iniciar sesion'}
             </button>
 
             <div className="border-t border-slate-100 pt-5 text-center text-xs text-slate-400">
-              Acceso restringido Â· Solo usuarios autorizados Â· Â© 2025 SmartRPA Monitor
+              Acceso restringido - Solo usuarios autorizados - 2025 SmartRPA Monitor
             </div>
           </form>
         </div>

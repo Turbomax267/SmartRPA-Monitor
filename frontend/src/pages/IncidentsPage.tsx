@@ -1,33 +1,43 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { listIncidentsRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { incidentCatalog } from '../mocks/monitorData'
 
 const tabs = ['Todas', 'Pendientes', 'En revision', 'Resueltas', 'Observadas'] as const
 
 export function IncidentsPage() {
+  const [incidents, setIncidents] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Todas')
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await listIncidentsRequest()
+      setIncidents(response.data)
+    }
+
+    void load()
+  }, [])
 
   const filteredIncidents = useMemo(() => {
     if (activeTab === 'Todas') {
-      return incidentCatalog
+      return incidents
     }
 
-    return incidentCatalog.filter((item) => {
+    return incidents.filter((item) => {
       if (activeTab === 'Pendientes') return item.status === 'PENDING'
       if (activeTab === 'En revision') return item.status === 'IN_REVIEW'
       if (activeTab === 'Resueltas') return item.status === 'RESOLVED'
       return item.status === 'OBSERVED'
     })
-  }, [activeTab])
+  }, [activeTab, incidents])
 
   const counters = {
-    total: incidentCatalog.length,
-    pending: incidentCatalog.filter((item) => item.status === 'PENDING').length,
-    review: incidentCatalog.filter((item) => item.status === 'IN_REVIEW').length,
-    resolved: incidentCatalog.filter((item) => item.status === 'RESOLVED').length,
-    observed: incidentCatalog.filter((item) => item.status === 'OBSERVED').length,
+    total: incidents.length,
+    pending: incidents.filter((item) => item.status === 'PENDING').length,
+    review: incidents.filter((item) => item.status === 'IN_REVIEW').length,
+    resolved: incidents.filter((item) => item.status === 'RESOLVED').length,
+    observed: incidents.filter((item) => item.status === 'OBSERVED').length,
   }
 
   return (

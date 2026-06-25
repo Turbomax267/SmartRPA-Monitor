@@ -1,16 +1,43 @@
+import { useEffect, useState } from 'react'
 import { ArrowLeft, OctagonAlert, ShieldAlert, Sparkles, RotateCcw } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { getExecutionRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { CircularMeter } from '../components/common/CircularMeter'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { getAnalysisById, getExecutionById, getIncidentById } from '../mocks/monitorData'
 
 export function ExecutionDetailPage() {
   const { executionId } = useParams()
-  const execution = getExecutionById(executionId)
-  const incident = getIncidentById(execution.incidentId)
-  const analysis = getAnalysisById(execution.analysisId)
+  const [execution, setExecution] = useState<any | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      if (!executionId) return
+      const response = await getExecutionRequest(executionId)
+      setExecution(response.data)
+    }
+
+    void load()
+  }, [executionId])
+
+  if (!execution) {
+    return <div className="text-sm text-slate-400">Cargando detalle...</div>
+  }
+
+  const incident = execution.incident ?? {
+    id: execution.incidentId,
+    code: '-',
+    severity: 'LOW',
+    status: 'PENDING',
+  }
+
+  const analysis = {
+    id: execution.analysisId,
+    classification: incident.category ?? 'General',
+    confidence: 0,
+    probableCause: incident.probableCause ?? 'Sin datos',
+  }
 
   return (
     <div className="space-y-6">

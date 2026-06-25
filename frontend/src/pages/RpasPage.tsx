@@ -1,22 +1,44 @@
 import { Bot, CalendarRange, EllipsisVertical, Play, Search, SquarePen, Waypoints } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { createJobRequest, listRpasRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { rpaCatalog } from '../mocks/monitorData'
 
 const processOptions = ['Todos', 'Certificaciones', 'Resultados Academicos', 'Configuracion', 'RRHH', 'Seguridad', 'TI']
 const responsibleOptions = ['Todos', 'Equipo Tecnico', 'Maria Rodriguez', 'J. Rodriguez', 'M. Torres', 'A. Garcia']
 const statusOptions = ['Todos', 'Activo', 'En revision', 'Inactivo', 'Error']
 
 export function RpasPage() {
+  const [rpas, setRpas] = useState<any[]>([])
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('Todos')
   const [process, setProcess] = useState('Todos')
   const [responsible, setResponsible] = useState('Todos')
+  const [message, setMessage] = useState<string | null>(null)
+
+  const loadRpas = async () => {
+    const response = await listRpasRequest()
+    setRpas(response.data)
+  }
+
+  useEffect(() => {
+    void loadRpas()
+  }, [])
+
+  const sendCommand = async (rpa: any, command: 'run' | 'activate' | 'deactivate') => {
+    setMessage(null)
+    await createJobRequest({
+      rpa_id: rpa.id,
+      agent_id: rpa.defaultAgentId,
+      command,
+    })
+    setMessage(`Orden enviada: ${command} para ${rpa.name}`)
+    await loadRpas()
+  }
 
   const filteredRpas = useMemo(() => {
-    return rpaCatalog.filter((item) => {
+    return rpas.filter((item) => {
       const matchesQuery =
         !query ||
         item.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -32,7 +54,7 @@ export function RpasPage() {
 
       return matchesQuery && matchesStatus && matchesProcess && matchesResponsible
     })
-  }, [process, query, responsible, status])
+  }, [process, query, responsible, rpas, status])
 
   return (
     <div className="space-y-6">
@@ -77,6 +99,8 @@ export function RpasPage() {
         })}
       </div>
 
+      {message && <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
+
       <div className="grid gap-5 xl:grid-cols-4">
         {filteredRpas.map((rpa) => (
           <SurfaceCard key={rpa.id} hoverable className="p-5">
@@ -115,6 +139,11 @@ export function RpasPage() {
                       ? 'Inactivo'
                       : 'Error'}
               </AppBadge>
+              <div className="mt-2">
+                <AppBadge tone={rpa.agentStatus === 'ONLINE' ? 'green' : 'slate'}>
+                  {rpa.agentStatus === 'ONLINE' ? 'Agente online' : 'Agente offline'}
+                </AppBadge>
+              </div>
             </div>
 
             <div className="mt-5 space-y-3 text-sm text-slate-500">
@@ -133,7 +162,10 @@ export function RpasPage() {
             </div>
 
             <div className="mt-6 grid grid-cols-3 gap-3">
-              <button className="rounded-2xl border border-slate-200 py-3 text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5">
+              <button
+                onClick={() => void sendCommand(rpa, 'run')}
+                className="rounded-2xl border border-slate-200 py-3 text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5"
+              >
                 <Play size={18} className="mx-auto" />
               </button>
               <Link
@@ -142,8 +174,11 @@ export function RpasPage() {
               >
                 Ver
               </Link>
-              <button className="rounded-2xl border border-slate-200 py-3 text-sm font-semibold text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5">
-                Editar
+              <button
+                onClick={() => void sendCommand(rpa, rpa.lifecycleStatus === 'ACTIVE' ? 'deactivate' : 'activate')}
+                className="rounded-2xl border border-slate-200 py-3 text-sm font-semibold text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5"
+              >
+                {rpa.lifecycleStatus === 'ACTIVE' ? 'Desactivar' : 'Activar'}
               </button>
             </div>
           </SurfaceCard>

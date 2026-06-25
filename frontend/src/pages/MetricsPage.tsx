@@ -1,7 +1,30 @@
+import { useEffect, useState } from 'react'
+import { metricsSummaryRequest } from '../api/monitor.api'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { dashboardSnapshot, metricsSnapshot } from '../mocks/monitorData'
 
 export function MetricsPage() {
+  const [metrics, setMetrics] = useState<any | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await metricsSummaryRequest()
+      setMetrics(response.data)
+    }
+
+    void load()
+  }, [])
+
+  if (!metrics) {
+    return <div className="text-sm text-slate-400">Cargando metricas...</div>
+  }
+
+  const summary = metrics.summary
+  const cards = [
+    { title: 'Total Ejecuciones', value: `${summary.total_executions}`, subtitle: 'Registradas', tone: 'blue' },
+    { title: 'Tasa de Exito', value: `${summary.success_rate}%`, subtitle: 'Ultimo periodo', tone: 'green' },
+    { title: 'Errores Detectados', value: `${summary.detected_errors}`, subtitle: 'Incidentes y fallos', tone: 'red' },
+    { title: 'Tiempo Promedio', value: `${(summary.average_duration_ms / 60000).toFixed(1)} min`, subtitle: 'Por ejecucion', tone: 'amber' },
+  ]
   return (
     <div className="space-y-6">
       <div>
@@ -24,7 +47,7 @@ export function MetricsPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-4">
-        {dashboardSnapshot.cards.slice(4).map((card) => (
+        {cards.map((card) => (
           <SurfaceCard key={card.title} className="p-5">
             <div className={`mb-4 h-1 w-full rounded-full ${card.tone === 'blue' ? 'bg-blue-500' : card.tone === 'green' ? 'bg-emerald-500' : card.tone === 'red' ? 'bg-red-500' : 'bg-amber-500'}`} />
             <p className={`text-4xl font-bold ${card.tone === 'blue' ? 'text-blue-500' : card.tone === 'green' ? 'text-emerald-500' : card.tone === 'red' ? 'text-red-500' : 'text-amber-500'}`}>
@@ -41,7 +64,7 @@ export function MetricsPage() {
           <h2 className="text-2xl font-semibold text-brand-blue">Ejecuciones por Dia</h2>
           <p className="text-sm text-slate-400">Ultimos 30 dias</p>
           <div className="mt-7 flex h-56 items-end gap-2">
-            {metricsSnapshot.dailyExecutions.map((value, index) => (
+            {metrics.dailyExecutions.map((value: number, index: number) => (
               <div
                 key={`${value}-${index}`}
                 className="flex-1 rounded-t-xl bg-slate-500/80"
@@ -55,7 +78,7 @@ export function MetricsPage() {
           <h2 className="text-2xl font-semibold text-brand-blue">Tasa de Exito (%)</h2>
           <p className="text-sm text-slate-400">Tendencia mensual</p>
           <div className="mt-8 flex h-56 items-end gap-4">
-            {metricsSnapshot.successTrend.map((value, index) => (
+            {metrics.successTrend.map((value: number, index: number) => (
               <div key={`${value}-${index}`} className="flex flex-1 flex-col items-center gap-3">
                 <div className="w-full rounded-t-2xl bg-emerald-400" style={{ height: `${value * 1.6}px` }} />
                 <span className="text-[11px] text-slate-300">{89 + index}%</span>
@@ -101,7 +124,7 @@ export function MetricsPage() {
           <h2 className="text-2xl font-semibold text-brand-blue">RPA con Mas Fallas</h2>
           <p className="text-sm text-slate-400">Top 6 del mes</p>
           <div className="mt-6 space-y-5">
-            {metricsSnapshot.topFailures.map((item) => (
+            {metrics.topFailures.map((item: any) => (
               <div key={item.name}>
                 <div className="mb-2 flex items-center justify-between text-sm">
                   <span className="font-medium text-brand-blue">{item.name}</span>
@@ -122,7 +145,7 @@ export function MetricsPage() {
           <h2 className="text-2xl font-semibold text-brand-blue">Tiempo Promedio por RPA</h2>
           <p className="text-sm text-slate-400">En minutos</p>
           <div className="mt-6 space-y-5">
-            {metricsSnapshot.averageByRpa.map((item) => (
+            {metrics.averageByRpa.map((item: any) => (
               <div key={item.name}>
                 <div className="mb-2 flex items-center justify-between text-sm">
                   <span className="font-medium text-brand-blue">{item.name}</span>

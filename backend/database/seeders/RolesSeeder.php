@@ -17,7 +17,7 @@ class RolesSeeder extends Seeder
             ],
             [
                 'name' => 'RPA_TECHNICIAN',
-                'display_name' => 'Técnico RPA',
+                'display_name' => 'Tecnico RPA',
                 'description' => 'Supervisa bots y ejecuciones.',
             ],
             [

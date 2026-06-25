@@ -23,7 +23,7 @@ class AuthController extends ApiController
             'token' => $payload['token'],
             'token_type' => 'Bearer',
             'user' => new UserResource($payload['user']),
-        ], 'Inicio de sesión exitoso.');
+        ], 'Inicio de sesion exitoso.');
     }
 
     public function me(Request $request): JsonResponse
@@ -37,6 +37,6 @@ class AuthController extends ApiController
     {
         $this->authService->logout($request);
 
-        return $this->success(null, 'Cierre de sesión exitoso.', Response::HTTP_OK);
+        return $this->success(null, 'Cierre de sesion exitoso.', Response::HTTP_OK);
     }
 }
