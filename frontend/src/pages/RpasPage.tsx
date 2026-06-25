@@ -1,4 +1,4 @@
-import { CalendarRange, EllipsisVertical, Play, Search, SquarePen, Waypoints } from 'lucide-react'
+import { Bot, CalendarRange, EllipsisVertical, Play, Search, SquarePen, Waypoints } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppBadge } from '../components/common/AppBadge'

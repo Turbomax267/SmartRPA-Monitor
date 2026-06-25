@@ -113,16 +113,16 @@ export function IncidentDetailPage() {
             <h2 className="text-2xl font-semibold text-brand-blue">Estado del incidente</h2>
             <div className="mt-6 space-y-4">
               {[
-                ['Detectado', incident.detectedAt, true],
-                ['En revision', incident.updatedAt, true],
-                ['Resuelto', '-', false],
-              ].map(([label, value, active]) => (
-                <div key={label} className="flex items-center justify-between">
+                { label: 'Detectado', value: incident.detectedAt, active: true },
+                { label: 'En revision', value: incident.updatedAt, active: true },
+                { label: 'Resuelto', value: '-', active: false },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className={`h-4 w-4 rounded-full border-2 ${active ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`} />
-                    <span className={`font-semibold ${active ? 'text-brand-blue' : 'text-slate-400'}`}>{label}</span>
+                    <span className={`h-4 w-4 rounded-full border-2 ${item.active ? 'border-blue-500 bg-blue-500' : 'border-slate-300'}`} />
+                    <span className={`font-semibold ${item.active ? 'text-brand-blue' : 'text-slate-400'}`}>{item.label}</span>
                   </div>
-                  <span className="text-sm text-slate-400">{value}</span>
+                  <span className="text-sm text-slate-400">{item.value}</span>
                 </div>
               ))}
             </div>
