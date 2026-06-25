@@ -45,6 +45,53 @@ Proyecto Full Stack inicial para monitoreo, autenticación y dashboard operativo
 - `GET /api/auth/me`
 - `GET /api/dashboard/summary`
 
+### Despliegue en Render
+
+#### Backend en Render
+
+- Crea un `Web Service`
+- `Root Directory`: `backend`
+- `Language`: `Docker`
+- `Dockerfile Path`: `./Dockerfile`
+
+Variables recomendadas en Render:
+
+- `APP_NAME=SmartRPA Monitor`
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_URL=https://tu-backend.onrender.com`
+- `APP_KEY=`
+- `LOG_CHANNEL=stack`
+- `DB_CONNECTION=pgsql`
+- `DB_HOST=...`
+- `DB_PORT=5432`
+- `DB_DATABASE=...`
+- `DB_USERNAME=...`
+- `DB_PASSWORD=...`
+- `SESSION_DRIVER=file`
+- `CACHE_STORE=file`
+- `QUEUE_CONNECTION=sync`
+- `SANCTUM_STATEFUL_DOMAINS=tu-frontend.onrender.com`
+
+Notas:
+
+- El `Dockerfile` ya instala PHP 8.3 y extensiones PostgreSQL.
+- El contenedor ya escucha en `PORT`, como requiere Render.
+- Si necesitas migrar en producción, ejecútalo desde el Shell de Render:
+  - `php artisan migrate --force`
+  - `php artisan db:seed --force`
+
+#### Frontend en Render
+
+- Crea un `Static Site`
+- `Root Directory`: `frontend`
+- `Build Command`: `npm install && npm run build`
+- `Publish Directory`: `dist`
+
+Variable necesaria:
+
+- `VITE_API_URL=https://tu-backend.onrender.com/api`
+
 ### Credenciales iniciales
 
 - Email: `admin@smartrpa.local`
