@@ -2,7 +2,6 @@ import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import logo from '../assets/branding/logo.png'
 import { AnimatedLoginBackground } from '../components/layout/AnimatedLoginBackground'
 import { useAuth } from '../hooks/useAuth'
 
@@ -27,7 +26,7 @@ export function LoginPage() {
       await login({ email, password }, { remember })
       navigate('/dashboard', { replace: true })
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesión.'
+      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesion.'
       const responseErrors =
         typeof error === 'object' &&
         error !== null &&
@@ -50,20 +49,40 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden overflow-hidden bg-brand-blue px-10 py-12 text-white lg:flex lg:flex-col lg:justify-center">
+    <div className="grid min-h-screen lg:grid-cols-[1fr_0.98fr]">
+      <section className="relative hidden overflow-hidden bg-brand-blue px-14 py-14 text-white lg:flex lg:flex-col lg:justify-center">
         <AnimatedLoginBackground />
 
-        <div className="animate-soft-reveal relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+        <div className="animate-soft-reveal relative z-10 mx-auto w-full max-w-xl">
           <div className="mb-10 h-1 w-12 rounded-full bg-brand-yellow" />
-          <img src={logo} alt="SmartRPA Monitor" className="mb-6 h-80 w-auto object-contain xl:h-[24rem]" />
+          <div className="mb-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-yellow text-xl font-bold text-brand-blue">
+            SR
+          </div>
+          <h1 className="text-6xl font-bold tracking-tight">SmartRPA Monitor</h1>
+          <p className="mt-4 text-xl text-white/70">Plataforma de monitoreo y analisis RPA</p>
+
+          <div className="mt-16 space-y-5 text-lg text-white/80">
+            {[
+              ['bg-emerald-400', 'Monitoreo en tiempo real'],
+              ['bg-brand-yellow', 'Deteccion de errores automatica'],
+              ['bg-blue-400', 'Analisis con IA integrado'],
+            ].map(([color, label]) => (
+              <div key={label} className="flex items-center gap-4">
+                <span className={`h-3 w-3 rounded-full ${color}`} />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       <section className="flex items-center justify-center bg-slate-100 px-5 py-10">
         <div className="animate-soft-reveal w-full max-w-md rounded-[2rem] border-t-4 border-brand-yellow bg-white p-8 shadow-[0_28px_60px_rgba(4,35,84,0.08)] [animation-delay:140ms]">
-          <div className="mb-8 lg:hidden">
-            <img src={logo} alt="SmartRPA Monitor" className="h-36 w-auto object-contain" />
+          <div className="mb-6 lg:hidden">
+            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-yellow text-xl font-bold text-brand-blue">
+              SR
+            </div>
+            <h1 className="text-3xl font-bold text-brand-blue">SmartRPA Monitor</h1>
           </div>
 
           <h2 className="text-4xl font-bold text-brand-blue">Bienvenido</h2>
@@ -71,7 +90,7 @@ export function LoginPage() {
 
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-brand-blue">Correo electrónico</label>
+              <label className="mb-2 block text-sm font-semibold text-brand-blue">Correo electronico</label>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
                 <Mail size={18} className="text-slate-400" />
                 <input
@@ -82,11 +101,11 @@ export function LoginPage() {
                   placeholder="usuario@empresa.com"
                 />
               </div>
-              {fieldErrors.email?.[0] && <p className="mt-2 text-xs text-red-500">{fieldErrors.email[0]}</p>}
+              {fieldErrors.email?.[0] ? <p className="mt-2 text-xs text-red-500">{fieldErrors.email[0]}</p> : null}
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-brand-blue">Contraseña</label>
+              <label className="mb-2 block text-sm font-semibold text-brand-blue">Contrasena</label>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
                 <LockKeyhole size={18} className="text-slate-400" />
                 <input
@@ -94,7 +113,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="w-full bg-transparent py-4 text-sm text-brand-blue outline-none placeholder:text-slate-400"
-                  placeholder="••••••••••••"
+                  placeholder="............"
                 />
                 <button
                   type="button"
@@ -104,9 +123,6 @@ export function LoginPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {fieldErrors.password?.[0] && (
-                <p className="mt-2 text-xs text-red-500">{fieldErrors.password[0]}</p>
-              )}
             </div>
 
             <div className="flex items-center justify-between gap-4 text-sm">
@@ -119,21 +135,21 @@ export function LoginPage() {
                 />
                 Recordarme
               </label>
-              <span className="text-brand-info">¿Olvidaste tu contraseña?</span>
+              <span className="text-brand-info">Olvidaste tu contrasena?</span>
             </div>
 
-            {errorMessage && (
+            {errorMessage ? (
               <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {errorMessage}
               </div>
-            )}
+            ) : null}
 
             <button
               type="submit"
               disabled={isSubmitting}
               className="flex w-full items-center justify-center rounded-2xl bg-brand-blue px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#0A2D67] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? 'Validando acceso...' : 'Iniciar sesión'}
+              {isSubmitting ? 'Validando acceso...' : 'Iniciar Sesion'}
             </button>
 
             <div className="border-t border-slate-100 pt-5 text-center text-xs text-slate-400">
