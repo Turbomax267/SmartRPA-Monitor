@@ -1,15 +1,37 @@
+import { useEffect, useState } from 'react'
 import { ArrowLeft, ClipboardPenLine, PlayCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { getIncidentRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { CircularMeter } from '../components/common/CircularMeter'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { getAnalysisById, getIncidentById } from '../mocks/monitorData'
 
 export function IncidentDetailPage() {
   const { incidentId } = useParams()
-  const incident = getIncidentById(incidentId)
-  const analysis = getAnalysisById(incident.analysisId)
+  const [incident, setIncident] = useState<any | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      if (!incidentId) return
+      const response = await getIncidentRequest(incidentId)
+      setIncident(response.data)
+    }
+
+    void load()
+  }, [incidentId])
+
+  if (!incident) {
+    return <div className="text-sm text-slate-400">Cargando incidente...</div>
+  }
+
+  const analysis = {
+    id: incident.analysisId,
+    classification: incident.category ?? 'General',
+    confidence: 0,
+    probableCause: incident.probableCause ?? 'Sin datos',
+    recommendation: ['Pendiente'],
+  }
 
   return (
     <div className="space-y-6">

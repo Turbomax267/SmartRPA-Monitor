@@ -45,7 +45,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             ->orderByDesc('total')
             ->get()
             ->map(fn (Incident $incident) => [
-                'category' => $incident->category ?? 'Sin categoría',
+                'category' => $incident->category ?? 'Sin categoria',
                 'total' => (int) $incident->total,
             ])
             ->values()

@@ -62,4 +62,9 @@ class RpaExecution extends Model
     {
         return $this->hasOne(Incident::class, 'execution_id');
     }
+
+    public function jobs(): HasMany
+    {
+        return $this->hasMany(RpaJob::class, 'execution_id');
+    }
 }

@@ -1,9 +1,22 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usersRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { getRoleCard, monitorUsers, roleCards } from '../mocks/monitorData'
+import { getRoleCard, roleCards } from '../mocks/monitorData'
 
 export function UsersPage() {
+  const [monitorUsers, setMonitorUsers] = useState<any[]>([])
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await usersRequest()
+      setMonitorUsers(response.data.users)
+    }
+
+    void load()
+  }, [])
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-6">

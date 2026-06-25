@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { listExecutionsRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { executionCatalog } from '../mocks/monitorData'
 
 const filters = {
   status: ['Todos', 'Exitoso', 'Fallido', 'En revision'],
@@ -11,13 +11,23 @@ const filters = {
 }
 
 export function ExecutionsPage() {
+  const [executions, setExecutions] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('Todos')
   const [responsible, setResponsible] = useState('Todos')
   const [errorType, setErrorType] = useState('Todos')
 
+  useEffect(() => {
+    const load = async () => {
+      const response = await listExecutionsRequest()
+      setExecutions(response.data)
+    }
+
+    void load()
+  }, [])
+
   const filteredExecutions = useMemo(() => {
-    return executionCatalog.filter((item) => {
+    return executions.filter((item) => {
       const matchesSearch =
         !search ||
         item.rpaName.toLowerCase().includes(search.toLowerCase()) ||
@@ -32,7 +42,7 @@ export function ExecutionsPage() {
 
       return matchesSearch && matchesStatus && matchesResponsible && matchesError
     })
-  }, [errorType, responsible, search, status])
+  }, [errorType, executions, responsible, search, status])
 
   return (
     <div className="space-y-6">

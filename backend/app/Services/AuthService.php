@@ -21,7 +21,7 @@ class AuthService
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['Las credenciales ingresadas no son válidas.'],
+                'email' => ['Las credenciales ingresadas no son validas.'],
             ]);
         }
 

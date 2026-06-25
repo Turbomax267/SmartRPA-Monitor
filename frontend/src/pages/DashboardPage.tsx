@@ -1,8 +1,9 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Activity, AlertTriangle, Bot, ChartColumn, CircleOff, Clock3, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { dashboardSummaryRequest } from '../api/dashboard.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { dashboardSnapshot, executionCatalog } from '../mocks/monitorData'
 
 const cardIcons = [Bot, ShieldCheck, CircleOff, AlertTriangle, Activity, ChartColumn, AlertTriangle, Clock3]
 const toneStyles = {
@@ -15,6 +16,36 @@ const toneStyles = {
 }
 
 export function DashboardPage() {
+  const [summary, setSummary] = useState<any | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await dashboardSummaryRequest()
+      setSummary(response.data)
+    }
+
+    void load()
+  }, [])
+
+  const cards = useMemo(() => {
+    if (!summary) return []
+
+    return [
+      { title: 'Total RPA', value: `${summary.total_rpas}`, subtitle: 'Bots monitoreados', tone: 'navy' },
+      { title: 'RPA Activos', value: `${summary.active_rpas}`, subtitle: 'En ejecucion normal', tone: 'green' },
+      { title: 'RPA Inactivos', value: `${summary.inactive_rpas}`, subtitle: 'Sin ejecuciones', tone: 'slate' },
+      { title: 'En Revision', value: `${summary.under_review_rpas}`, subtitle: 'Requieren atencion', tone: 'amber' },
+      { title: 'Total Ejecuciones', value: `${summary.total_executions}`, subtitle: 'Acumuladas', tone: 'blue' },
+      { title: 'Tasa de Exito', value: `${summary.success_rate}%`, subtitle: 'General', tone: 'green' },
+      { title: 'Errores Detectados', value: `${summary.detected_errors}`, subtitle: 'Incidentes y fallos', tone: 'red' },
+      { title: 'Tiempo Promedio', value: `${(summary.average_duration_ms / 60000).toFixed(1)} min`, subtitle: 'Por ejecucion', tone: 'amber' },
+    ]
+  }, [summary])
+
+  if (!summary) {
+    return <div className="text-sm text-slate-400">Cargando dashboard...</div>
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -24,7 +55,7 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-4">
-        {dashboardSnapshot.cards.map((card, index) => {
+        {cards.map((card, index) => {
           const Icon = cardIcons[index]
           const tone = toneStyles[card.tone]
 
@@ -57,13 +88,13 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-8 flex h-56 items-end gap-3">
-            {dashboardSnapshot.executionsByDay.map((value, index) => (
-              <div key={`${value}-${index}`} className="flex flex-1 flex-col items-center gap-3">
+            {summary.executions_by_day.map((item: any, index: number) => (
+              <div key={`${item.day ?? index}-${index}`} className="flex flex-1 flex-col items-center gap-3">
                 <div
                   className={`w-full rounded-t-2xl ${
                     index === 11 ? 'bg-brand-blue shadow-[0_18px_30px_rgba(4,35,84,0.22)]' : 'bg-slate-500/80'
                   }`}
-                  style={{ height: `${Math.max(36, value * 1.5)}px` }}
+                  style={{ height: `${Math.max(36, item.total * 1.5)}px` }}
                 />
                 <span className="text-[11px] text-slate-300">{index + 1}</span>
               </div>
@@ -85,26 +116,26 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-6 space-y-3">
-            {dashboardSnapshot.errorsByType.map((item) => (
-              <div key={item.label} className="flex items-center justify-between text-sm">
+            {summary.errors_by_category.map((item: any, index: number) => (
+              <div key={item.category ?? index} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-slate-500">
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${
-                      item.tone === 'red'
+                      index % 3 === 0
                         ? 'bg-red-500'
-                        : item.tone === 'amber'
+                        : index % 3 === 1
                           ? 'bg-amber-500'
                           : 'bg-blue-500'
                     }`}
                   />
-                  {item.label}
+                  {item.category}
                 </div>
                 <span
                   className={`font-semibold ${
-                    item.tone === 'red' ? 'text-red-500' : item.tone === 'amber' ? 'text-amber-500' : 'text-blue-500'
+                    index % 3 === 0 ? 'text-red-500' : index % 3 === 1 ? 'text-amber-500' : 'text-blue-500'
                   }`}
                 >
-                  {item.percent}%
+                  {item.total}
                 </span>
               </div>
             ))}
@@ -129,10 +160,10 @@ export function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {executionCatalog.slice(0, 6).map((execution) => (
+              {summary.latest_executions.map((execution: any) => (
                 <tr key={execution.id} className="border-b border-slate-100 text-sm text-slate-500 transition hover:bg-slate-50/80">
                   <td className="px-6 py-4 font-semibold text-brand-blue">
-                    <Link to={`/executions/${execution.id}`}>{execution.rpaName}</Link>
+                    <Link to={`/executions/${execution.id}`}>{execution.rpa}</Link>
                   </td>
                   <td className="px-6 py-4">{execution.process}</td>
                   <td className="px-6 py-4">
@@ -152,9 +183,9 @@ export function DashboardPage() {
                           : 'En revision'}
                     </AppBadge>
                   </td>
-                  <td className="px-6 py-4">{execution.durationLabel}</td>
+                  <td className="px-6 py-4">{`${Math.round((execution.duration_ms ?? 0) / 1000)}s`}</td>
                   <td className="px-6 py-4">{execution.responsible}</td>
-                  <td className="px-6 py-4">{execution.timeLabel}</td>
+                  <td className="px-6 py-4">{execution.started_at ? new Date(execution.started_at).toLocaleTimeString() : '-'}</td>
                 </tr>
               ))}
             </tbody>

@@ -13,6 +13,7 @@ use App\Models\RpaExecution;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DemoDataSeeder extends Seeder
@@ -26,7 +27,7 @@ class DemoDataSeeder extends Seeder
             ['email' => 'tecnico@smartrpa.local'],
             [
                 'role_id' => $technicianRole?->id,
-                'name' => 'Laura Rodríguez',
+                'name' => 'Laura Rodriguez',
                 'password' => bcrypt('SmartRPA123*'),
                 'status' => 'ACTIVE',
             ]
@@ -51,6 +52,7 @@ class DemoDataSeeder extends Seeder
                 'environment' => 'PRODUCTION',
                 'version' => '1.0.0',
                 'connection_status' => 'ONLINE',
+                'api_key_hash' => Hash::make(env('AGENT_LIMA_01_TOKEN', 'agent-lima-01-token')),
                 'is_active' => true,
                 'last_seen_at' => now(),
             ]
@@ -65,13 +67,14 @@ class DemoDataSeeder extends Seeder
                 'environment' => 'PRODUCTION',
                 'version' => '1.0.0',
                 'connection_status' => 'OFFLINE',
+                'api_key_hash' => Hash::make(env('AGENT_LIMA_02_TOKEN', 'agent-lima-02-token')),
                 'is_active' => false,
             ]
         );
 
         $rpas = [
-            ['code' => 'RPA-001', 'name' => 'Bot_Facturación_Mensual', 'process_name' => 'Contabilidad', 'status' => 'ACTIVE', 'agent' => $agentA, 'user' => $technician],
-            ['code' => 'RPA-002', 'name' => 'Bot_Conciliación_Banco', 'process_name' => 'Finanzas', 'status' => 'ACTIVE', 'agent' => $agentA, 'user' => $manager],
+            ['code' => 'RPA-001', 'name' => 'Bot_Facturacion_Mensual', 'process_name' => 'Contabilidad', 'status' => 'ACTIVE', 'agent' => $agentA, 'user' => $technician],
+            ['code' => 'RPA-002', 'name' => 'Bot_Conciliacion_Banco', 'process_name' => 'Finanzas', 'status' => 'ACTIVE', 'agent' => $agentA, 'user' => $manager],
             ['code' => 'RPA-003', 'name' => 'Bot_Reportes_RRHH', 'process_name' => 'RRHH', 'status' => 'ACTIVE', 'agent' => $agentA, 'user' => $technician],
             ['code' => 'RPA-004', 'name' => 'Bot_Registro_Proveedores', 'process_name' => 'Operaciones', 'status' => 'UNDER_REVIEW', 'agent' => $agentB, 'user' => $manager],
             ['code' => 'RPA-005', 'name' => 'Bot_Carga_Documental', 'process_name' => 'Archivo', 'status' => 'INACTIVE', 'agent' => $agentB, 'user' => $technician],
@@ -85,7 +88,7 @@ class DemoDataSeeder extends Seeder
                     'responsible_user_id' => $row['user']->id,
                     'name' => $row['name'],
                     'process_name' => $row['process_name'],
-                    'description' => 'Proceso automatizado del área '.$row['process_name'],
+                    'description' => 'Proceso automatizado del area '.$row['process_name'],
                     'script_name' => Str::slug($row['name'], '_').'.py',
                     'execution_mode' => 'SCHEDULED',
                     'schedule_expression' => '0 */2 * * *',
@@ -109,9 +112,9 @@ class DemoDataSeeder extends Seeder
                     'total_items' => 100,
                     'successful_items' => $day % 5 === 0 && $index < 2 ? 82 : 100,
                     'failed_items' => $day % 5 === 0 && $index < 2 ? 18 : 0,
-                    'result_summary' => 'Ejecución registrada para dashboard.',
+                    'result_summary' => 'Ejecucion registrada para dashboard.',
                     'error_code' => $day % 5 === 0 && $index < 2 ? 'TIMEOUT' : null,
-                    'error_message' => $day % 5 === 0 && $index < 2 ? 'Se agotó el tiempo de espera.' : null,
+                    'error_message' => $day % 5 === 0 && $index < 2 ? 'Se agoto el tiempo de espera.' : null,
                     'metadata' => ['source' => 'seeder'],
                 ]);
 
@@ -120,7 +123,7 @@ class DemoDataSeeder extends Seeder
                     'sequence_number' => 1,
                     'level' => $execution->status === 'FAILED' ? 'ERROR' : 'INFO',
                     'step' => 'Inicio',
-                    'message' => $execution->status === 'FAILED' ? 'Error de conectividad detectado.' : 'Ejecución completada.',
+                    'message' => $execution->status === 'FAILED' ? 'Error de conectividad detectado.' : 'Ejecucion completada.',
                     'error_code' => $execution->error_code,
                     'context' => ['rpa' => $rpa->code],
                     'occurred_at' => $execution->finished_at,
@@ -134,7 +137,7 @@ class DemoDataSeeder extends Seeder
                         'rpa_id' => $rpa->id,
                         'assigned_to' => $technician->id,
                         'title' => 'Fallo en '.$rpa->name,
-                        'category' => $index % 2 === 0 ? 'Timeout' : 'Conexión',
+                        'category' => $index % 2 === 0 ? 'Timeout' : 'Conexion',
                         'severity' => 'HIGH',
                         'status' => 'OPEN',
                         'description' => 'Incidente detectado por el monitor.',
@@ -160,7 +163,7 @@ class DemoDataSeeder extends Seeder
                         'confidence' => 92.5,
                         'probable_cause' => 'Respuesta lenta del servicio dependiente.',
                         'recommendation' => 'Revisar latencia de red y reintentar.',
-                        'sanitized_log' => 'Log saneado para revisión.',
+                        'sanitized_log' => 'Log saneado para revision.',
                         'raw_response' => ['label' => 'Timeout'],
                     ]);
 
@@ -168,7 +171,7 @@ class DemoDataSeeder extends Seeder
                         'incident_id' => $incident->id,
                         'user_id' => $technician->id,
                         'action_type' => 'CREATED',
-                        'comment' => 'Incidente generado automáticamente.',
+                        'comment' => 'Incidente generado automaticamente.',
                         'status_before' => 'NEW',
                         'status_after' => 'OPEN',
                         'created_at' => now()->subMinutes(10),

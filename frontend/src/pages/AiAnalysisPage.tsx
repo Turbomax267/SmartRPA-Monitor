@@ -1,14 +1,29 @@
+import { useEffect, useState } from 'react'
 import { Copy, Info } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
+import { getAnalysisRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { CircularMeter } from '../components/common/CircularMeter'
 import { SurfaceCard } from '../components/common/SurfaceCard'
-import { getAnalysisById } from '../mocks/monitorData'
 
 export function AiAnalysisPage() {
   const { analysisId } = useParams()
-  const analysis = getAnalysisById(analysisId)
+  const [analysis, setAnalysis] = useState<any | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      if (!analysisId) return
+      const response = await getAnalysisRequest(analysisId)
+      setAnalysis(response.data)
+    }
+
+    void load()
+  }, [analysisId])
+
+  if (!analysis) {
+    return <div className="text-sm text-slate-400">Cargando analisis...</div>
+  }
 
   return (
     <div className="space-y-6">

@@ -43,4 +43,9 @@ class Rpa extends Model
     {
         return $this->hasMany(RpaExecution::class);
     }
+
+    public function jobs(): HasMany
+    {
+        return $this->hasMany(RpaJob::class);
+    }
 }

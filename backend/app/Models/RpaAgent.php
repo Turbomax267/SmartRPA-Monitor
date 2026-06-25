@@ -32,4 +32,9 @@ class RpaAgent extends Model
     {
         return $this->hasMany(Rpa::class, 'default_agent_id');
     }
+
+    public function jobs(): HasMany
+    {
+        return $this->hasMany(RpaJob::class, 'agent_id');
+    }
 }
