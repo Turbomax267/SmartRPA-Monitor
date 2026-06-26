@@ -1,28 +1,9 @@
 {
   "pendientes": {
     "resultados": [],
-    "certificados": [
-      {
-        "id": 1,
-        "alumno": "Alumno 02",
-        "programa": "Programa X"
-      }
-    ],
-    "fechas": [
-      {
-        "id": 1,
-        "programa": "Programa Y",
-        "fecha_inicio": "2026-07-01",
-        "fecha_fin": "2026-07-30"
-      }
-    ],
-    "evaluaciones": [
-      {
-        "id": 1,
-        "curso": "Curso B",
-        "tipo": "Final"
-      }
-    ],
+    "certificados": [],
+    "fechas": [],
+    "evaluaciones": [],
     "notas": []
   },
   "resultados": [
@@ -32,12 +13,49 @@
       "curso": "Curso A",
       "nota": 18,
       "estado": "procesado"
+    },
+    {
+      "id": 1,
+      "alumno": "Alumno 01",
+      "curso": "Curso A",
+      "nota": 18,
+      "estado": "procesado"
     }
   ],
-  "certificados": [],
-  "fechas": [],
-  "evaluaciones": [],
+  "certificados": [
+    {
+      "id": 1,
+      "alumno": "Alumno 02",
+      "programa": "Programa X",
+      "estado": "publicado"
+    }
+  ],
+  "fechas": [
+    {
+      "id": 1,
+      "programa": "Programa Y",
+      "fecha_inicio": "2026-07-01",
+      "fecha_fin": "2026-07-30",
+      "estado": "actualizado"
+    }
+  ],
+  "evaluaciones": [
+    {
+      "id": 1,
+      "curso": "Curso B",
+      "tipo": "Final",
+      "estado": "creado"
+    }
+  ],
   "notas": [
+    {
+      "id": 1,
+      "alumno": "Alumno 03",
+      "curso": "Curso C",
+      "nota_actual": 12,
+      "nota_nueva": 16,
+      "estado": "actualizado"
+    },
     {
       "id": 1,
       "alumno": "Alumno 03",

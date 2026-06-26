@@ -26,6 +26,8 @@ export interface ExecutionListItem {
   responsible: string
   dateLabel: string
   timeLabel: string
+  startedAt?: string | null
+  finishedAt?: string | null
   durationLabel: string
   errorType: string
 }

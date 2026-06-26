@@ -42,6 +42,36 @@ export function ExecutionsPage() {
     hasMorePages: false,
   })
 
+  const formatExecutionDate = (value?: string | null, fallbackDate?: string, fallbackTime?: string) => {
+    if (!value) {
+      return {
+        dateLabel: fallbackDate ?? '-',
+        timeLabel: fallbackTime ?? '--:--',
+      }
+    }
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+      return {
+        dateLabel: fallbackDate ?? '-',
+        timeLabel: fallbackTime ?? '--:--',
+      }
+    }
+
+    return {
+      dateLabel: date.toLocaleDateString([], {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }),
+      timeLabel: date.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
+    }
+  }
+
   const loadExecutions = useCallback(async () => {
     const response = await listExecutionsRequest({
       page,
@@ -187,8 +217,16 @@ export function ExecutionsPage() {
               {executions.map((execution) => (
                 <tr key={execution.id} className="border-b border-slate-100 text-sm text-slate-500 transition hover:bg-slate-50/80">
                   <td className="px-5 py-4">
-                    <p>{execution.dateLabel}</p>
-                    <p className="text-xs text-slate-400">{execution.timeLabel}</p>
+                    {(() => {
+                      const formattedDate = formatExecutionDate(execution.startedAt, execution.dateLabel, execution.timeLabel)
+
+                      return (
+                        <>
+                          <p>{formattedDate.dateLabel}</p>
+                          <p className="text-xs text-slate-400">{formattedDate.timeLabel}</p>
+                        </>
+                      )
+                    })()}
                   </td>
                   <td className="px-5 py-4 font-semibold text-brand-blue">
                     <Link to={`/executions/${execution.id}`}>{execution.rpaName}</Link>
