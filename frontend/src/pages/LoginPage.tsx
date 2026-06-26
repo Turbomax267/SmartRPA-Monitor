@@ -86,7 +86,7 @@ export function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-brand-blue">Contrasena</label>
+              <label className="mb-2 block text-sm font-semibold text-brand-blue">Contraseña</label>
               <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4">
                 <LockKeyhole size={18} className="text-slate-400" />
                 <input
@@ -119,7 +119,7 @@ export function LoginPage() {
                 />
                 Recordarme
               </label>
-              <span className="text-brand-info">Olvidaste tu contrasena?</span>
+              <span className="text-brand-info">Olvidaste tu contraseña?</span>
             </div>
 
             {errorMessage && (
