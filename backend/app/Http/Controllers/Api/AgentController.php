@@ -36,7 +36,7 @@ class AgentController extends ApiController
 
         $agent->forceFill([
             'connection_status' => strtoupper($validated['status']),
-            'last_seen_at' => $validated['sent_at'] ?? now(),
+            'last_seen_at' => now('UTC'),
             'is_active' => true,
         ])->save();
 

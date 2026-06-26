@@ -28,6 +28,41 @@ export function RpasPage() {
   })
   const [armedRpas, setArmedRpas] = useState<Record<string, boolean>>({})
 
+  const formatBrowserDateLabel = (value?: string | null, fallback?: string) => {
+    if (!value) {
+      return fallback ?? 'Sin registros'
+    }
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+      return fallback ?? 'Sin registros'
+    }
+
+    const now = new Date()
+    const sameDay = date.toDateString() === now.toDateString()
+    const yesterday = new Date(now)
+    yesterday.setDate(now.getDate() - 1)
+
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+
+    if (date.toDateString() === yesterday.toDateString()) {
+      return `Ayer ${time}`
+    }
+
+    if (sameDay) {
+      return `Hoy ${time}`
+    }
+
+    return date.toLocaleString([], {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+  }
+
   const getDisplayLifecycleStatus = (rpa: any) => rpa.lifecycleStatus
 
   const getLifecycleTone = (status: string) => {
@@ -331,7 +366,7 @@ export function RpasPage() {
             <div className="mt-5 space-y-3 text-sm text-slate-500">
               <div className="flex items-center gap-2">
                 <CalendarRange size={16} className="text-slate-300" />
-                Ultima ejecucion: {rpa.lastExecutionLabel}
+                Ultima ejecucion: {formatBrowserDateLabel(rpa.lastExecutionAt, rpa.lastExecutionLabel)}
               </div>
               <div className="flex items-center gap-2">
                 <SquarePen size={16} className="text-slate-300" />
