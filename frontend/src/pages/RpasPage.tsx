@@ -28,15 +28,71 @@ export function RpasPage() {
   })
   const [armedRpas, setArmedRpas] = useState<Record<string, boolean>>({})
 
+  const formatFallbackLabel = (fallback?: string) => {
+    if (!fallback) {
+      return 'Sin registros'
+    }
+
+    const todayMatch = fallback.match(/^Hoy\s+(\d{1,2}):(\d{2})$/i)
+    if (todayMatch) {
+      const date = new Date()
+      date.setHours(Number(todayMatch[1]), Number(todayMatch[2]), 0, 0)
+      date.setHours(date.getHours() + 5)
+
+      return `Hoy ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`
+    }
+
+    const yesterdayMatch = fallback.match(/^Ayer\s+(\d{1,2}):(\d{2})$/i)
+    if (yesterdayMatch) {
+      const date = new Date()
+      date.setDate(date.getDate() - 1)
+      date.setHours(Number(yesterdayMatch[1]), Number(yesterdayMatch[2]), 0, 0)
+      date.setHours(date.getHours() + 5)
+
+      return `${date.toDateString() === new Date(new Date().setDate(new Date().getDate() - 1)).toDateString() ? 'Ayer' : date.toLocaleDateString([], {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}`
+    }
+
+    const fullMatch = fallback.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/)
+    if (fullMatch) {
+      const date = new Date(
+        Number(fullMatch[3]),
+        Number(fullMatch[2]) - 1,
+        Number(fullMatch[1]),
+        Number(fullMatch[4]),
+        Number(fullMatch[5]),
+        0,
+        0,
+      )
+      date.setHours(date.getHours() + 5)
+
+      return date.toLocaleString([], {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
+    }
+
+    return fallback
+  }
+
   const formatBrowserDateLabel = (value?: string | null, fallback?: string) => {
     if (!value) {
-      return fallback ?? 'Sin registros'
+      return formatFallbackLabel(fallback)
     }
 
     const date = new Date(value)
     if (Number.isNaN(date.getTime())) {
-      return fallback ?? 'Sin registros'
+      return formatFallbackLabel(fallback)
     }
+
+    date.setHours(date.getHours() + 5)
 
     const now = new Date()
     const sameDay = date.toDateString() === now.toDateString()
