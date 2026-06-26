@@ -57,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $exception->getMessage(),
                 'file' => $exception->getFile(),
                 'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
             ]);
         });
 
@@ -65,10 +66,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            return response()->json([
+            $payload = [
                 'success' => false,
                 'message' => 'Ocurrio un error interno en la API.',
                 'errors' => [],
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            ];
+
+            if ($request->is('api/agent/*')) {
+                $payload['debug'] = [
+                    'type' => $exception::class,
+                    'message' => $exception->getMessage(),
+                ];
+            }
+
+            return response()->json($payload, Response::HTTP_INTERNAL_SERVER_ERROR);
         });
     })->create();

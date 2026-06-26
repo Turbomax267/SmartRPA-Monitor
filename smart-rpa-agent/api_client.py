@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
 import requests
+from requests import HTTPError
 
 from config import REQUEST_TIMEOUT, SMART_RPA_AGENT_TOKEN, SMART_RPA_API_URL
 
@@ -122,5 +123,12 @@ class ApiClient:
             headers=self.headers,
             timeout=REQUEST_TIMEOUT,
         )
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except HTTPError as exc:
+            body = response.text.strip()
+            message = f"{exc} | response: {body}" if body else str(exc)
+            raise HTTPError(message, response=response) from exc
+
         return response.json()
