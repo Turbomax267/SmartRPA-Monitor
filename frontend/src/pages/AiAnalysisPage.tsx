@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Copy, Info } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { getAnalysisRequest } from '../api/monitor.api'
+import type { AnalysisDetail, AnalysisLogLine, SimilarCase } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { CircularMeter } from '../components/common/CircularMeter'
@@ -9,7 +10,7 @@ import { SurfaceCard } from '../components/common/SurfaceCard'
 
 export function AiAnalysisPage() {
   const { analysisId } = useParams()
-  const [analysis, setAnalysis] = useState<any | null>(null)
+  const [analysis, setAnalysis] = useState<AnalysisDetail | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -68,7 +69,7 @@ export function AiAnalysisPage() {
             <h3 className="text-2xl font-semibold text-brand-blue">A. Log analizado</h3>
             <div className="mt-5 rounded-[24px] bg-[#0b1220] px-5 py-5 font-mono text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <div className="space-y-3">
-                {analysis.sanitizedLog.map((line) => (
+                {analysis.sanitizedLog.map((line: AnalysisLogLine) => (
                   <div key={`${line.time}-${line.step}`} className="grid grid-cols-[86px_80px_80px_1fr_26px] gap-3">
                     <span className="text-slate-300">{line.time}</span>
                     <span className={line.level === 'INFO' ? 'text-emerald-400' : line.level === 'ERROR' ? 'text-red-400' : 'text-amber-400'}>
@@ -99,7 +100,7 @@ export function AiAnalysisPage() {
           <SurfaceCard>
             <h3 className="text-2xl font-semibold text-brand-blue">D. Recomendacion inicial</h3>
             <div className="mt-4 space-y-4">
-              {analysis.recommendation.map((item, index) => (
+              {analysis.recommendation.map((item: string, index: number) => (
                 <div key={item} className="flex gap-3 text-base text-slate-500">
                   <span className="mt-1 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-500">
                     {index + 1}
@@ -171,7 +172,7 @@ export function AiAnalysisPage() {
           <SurfaceCard>
             <h3 className="text-2xl font-semibold text-brand-blue">I. Analisis previos del mismo bot</h3>
             <div className="mt-5 space-y-4">
-              {analysis.similarCases.map((item) => (
+              {analysis.similarCases.map((item: SimilarCase) => (
                 <div key={item.date} className="grid grid-cols-[0.9fr_1fr_0.6fr] gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
                   <span>{item.date}</span>
                   <span>{item.errorType}</span>

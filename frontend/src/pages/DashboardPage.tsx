@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { dashboardSummaryRequest } from '../api/dashboard.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
+import type { DashboardChartPoint, DashboardSummary, LatestExecution } from '../interfaces'
 
 const cardIcons = [Bot, ShieldCheck, CircleOff, AlertTriangle, Activity, ChartColumn, AlertTriangle, Clock3]
 const toneStyles = {
@@ -14,9 +15,16 @@ const toneStyles = {
   blue: 'bg-blue-500 text-blue-500',
   red: 'bg-red-500 text-red-500',
 }
+type ToneKey = keyof typeof toneStyles
+interface DashboardCard {
+  title: string
+  value: string
+  subtitle: string
+  tone: ToneKey
+}
 
 export function DashboardPage() {
-  const [summary, setSummary] = useState<any | null>(null)
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -27,7 +35,7 @@ export function DashboardPage() {
     void load()
   }, [])
 
-  const cards = useMemo(() => {
+  const cards = useMemo<DashboardCard[]>(() => {
     if (!summary) return []
 
     return [
@@ -88,7 +96,7 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-8 flex h-56 items-end gap-3">
-            {summary.executions_by_day.map((item: any, index: number) => (
+            {summary.executions_by_day.map((item: DashboardChartPoint, index: number) => (
               <div key={`${item.day ?? index}-${index}`} className="flex flex-1 flex-col items-center gap-3">
                 <div
                   className={`w-full rounded-t-2xl ${
@@ -116,7 +124,7 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-6 space-y-3">
-            {summary.errors_by_category.map((item: any, index: number) => (
+            {summary.errors_by_category.map((item: DashboardChartPoint, index: number) => (
               <div key={item.category ?? index} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 text-slate-500">
                   <span
@@ -160,7 +168,7 @@ export function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {summary.latest_executions.map((execution: any) => (
+              {summary.latest_executions.map((execution: LatestExecution) => (
                 <tr key={execution.id} className="border-b border-slate-100 text-sm text-slate-500 transition hover:bg-slate-50/80">
                   <td className="px-6 py-4 font-semibold text-brand-blue">
                     <Link to={`/executions/${execution.id}`}>{execution.rpa}</Link>
