@@ -248,9 +248,9 @@ class MonitorController extends ApiController
     public function settings(): JsonResponse
     {
         $connectedAgents = Rpa::query()
-            ->whereHas('defaultAgent', function ($query): void {
-                $query->where('connection_status', 'ONLINE')->where('is_active', true);
-            })
+            ->with('defaultAgent')
+            ->get()
+            ->filter(fn (Rpa $rpa) => $this->resolveAgentConnectionStatus($rpa) === 'ONLINE')
             ->count();
 
         $categories = Incident::query()
@@ -357,14 +357,15 @@ class MonitorController extends ApiController
         $successfulExecutions = $executions->where('status', 'SUCCESS')->count();
         $averageMinutes = round(((float) $executions->avg('duration_ms')) / 60000, 1);
         $successRate = $executions->count() > 0 ? round(($successfulExecutions / $executions->count()) * 100, 1) : 0;
-        $uptime = $rpa->defaultAgent?->connection_status === 'ONLINE' ? round(max($successRate, 85.0), 1) : 0.0;
+        $agentStatus = $this->resolveAgentConnectionStatus($rpa);
+        $uptime = $agentStatus === 'ONLINE' ? round(max($successRate, 85.0), 1) : 0.0;
         $hasRunningExecution = RpaExecution::query()->where('rpa_id', $rpa->id)->where('status', 'RUNNING')->exists();
         $lastExecution = RpaExecution::query()->where('rpa_id', $rpa->id)->latest('started_at')->first();
         $operationalStatus = ! $rpa->defaultAgent?->is_active || $rpa->lifecycle_status === 'INACTIVE'
             ? 'INACTIVE'
             : ($hasRunningExecution
                 ? 'RUNNING'
-                : ($rpa->defaultAgent?->connection_status !== 'ONLINE'
+                : ($agentStatus !== 'ONLINE'
                     ? 'OFFLINE'
                     : (($lastExecution?->status === 'FAILED') ? 'ERROR' : 'AVAILABLE')));
 
@@ -377,7 +378,7 @@ class MonitorController extends ApiController
             'scriptName' => $rpa->script_name,
             'lifecycleStatus' => $rpa->lifecycle_status,
             'defaultAgentId' => $rpa->default_agent_id,
-            'agentStatus' => $rpa->defaultAgent?->connection_status ?? 'OFFLINE',
+            'agentStatus' => $agentStatus,
             'operationalStatus' => $operationalStatus,
             'lastExecutionLabel' => $this->formatRelativeDateTime($rpa->last_execution_at),
             'executionMode' => $this->mapExecutionMode($rpa->execution_mode),
@@ -637,6 +638,30 @@ class MonitorController extends ApiController
                 true
             )
         ");
+    }
+
+    private function resolveAgentConnectionStatus(Rpa $rpa): string
+    {
+        if (! $rpa->defaultAgent || ! $rpa->defaultAgent->is_active) {
+            return 'OFFLINE';
+        }
+
+        if ($rpa->defaultAgent->connection_status !== 'ONLINE') {
+            return strtoupper((string) $rpa->defaultAgent->connection_status);
+        }
+
+        $lastSeenAt = $rpa->defaultAgent->last_seen_at;
+        $timeoutSeconds = (int) env('RPA_AGENT_HEARTBEAT_TIMEOUT_SECONDS', 30);
+
+        if (! $lastSeenAt) {
+            return 'OFFLINE';
+        }
+
+        $lastSeen = $lastSeenAt instanceof CarbonInterface ? $lastSeenAt : Carbon::parse($lastSeenAt);
+
+        return $lastSeen->greaterThanOrEqualTo(now()->subSeconds($timeoutSeconds))
+            ? 'ONLINE'
+            : 'OFFLINE';
     }
 
     private function formatDuration(?int $durationMs): string

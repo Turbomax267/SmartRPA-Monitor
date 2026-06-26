@@ -295,64 +295,114 @@ export function RpasPage() {
       </div>
 
       {statusModalRpa && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[32px] bg-white p-7 shadow-[0_32px_80px_rgba(15,23,42,0.22)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-2xl font-bold text-brand-blue">Cambiar estado del RPA</h3>
-                <p className="mt-2 text-sm text-slate-400">{statusModalRpa.name}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStatusModalRpa(null)}
-                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-brand-blue"
-              >
-                <X size={18} />
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 px-4 backdrop-blur-md">
+          <div className="w-full max-w-3xl overflow-hidden rounded-[40px] border border-white/70 bg-white shadow-[0_40px_120px_rgba(15,23,42,0.28)]">
+            <div className="relative overflow-hidden bg-[linear-gradient(135deg,rgba(4,35,84,1),rgba(11,47,110,0.96))] px-8 py-8 text-white">
+              <div className="absolute -left-10 top-0 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute -right-10 bottom-0 h-32 w-32 rounded-full bg-brand-yellow/20 blur-3xl" />
 
-            <div className="mt-6 grid gap-3">
-              {[
-                { value: 'ACTIVE', label: 'Activo', helper: 'Visible como habilitado cuando el agente este online.' },
-                { value: 'INACTIVE', label: 'Inactivo', helper: 'Bloquea su uso operativo desde el monitor.' },
-                { value: 'MAINTENANCE', label: 'En revision', helper: 'Ideal para mantenimiento o validacion.' },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setSelectedLifecycleStatus(option.value as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE')}
-                  className={`rounded-2xl border px-4 py-4 text-left transition ${
-                    selectedLifecycleStatus === option.value
-                      ? 'border-brand-blue bg-brand-blue/5 shadow-soft'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-brand-blue">{option.label}</p>
-                      <p className="mt-1 text-sm text-slate-400">{option.helper}</p>
-                    </div>
-                    <AppBadge tone={getLifecycleTone(option.value)}>{option.label}</AppBadge>
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="flex items-center gap-5">
+                  <div className="grid h-16 w-16 place-items-center rounded-[22px] bg-white/10 ring-1 ring-white/15">
+                    <Hand size={28} />
                   </div>
+                  <div>
+                    <h3 className="text-[2rem] font-bold leading-tight">Cambiar estado del RPA</h3>
+                    <p className="mt-1 text-base text-white/75">{statusModalRpa.name}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStatusModalRpa(null)}
+                  className="rounded-full p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                >
+                  <X size={20} />
                 </button>
-              ))}
+              </div>
+
+              <div className="relative mt-6 grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Estado configurado</p>
+                  <p className="mt-2 text-lg font-semibold">{getLifecycleLabel(statusModalRpa.lifecycleStatus)}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Agente</p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {statusModalRpa.agentStatus === 'ONLINE' ? 'Online' : 'Offline'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Estado visible</p>
+                  <p className="mt-2 text-lg font-semibold">{getLifecycleLabel(getDisplayLifecycleStatus(statusModalRpa))}</p>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-7 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setStatusModalRpa(null)}
-                className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-brand-blue transition hover:bg-slate-50"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleUpdateLifecycle()}
-                className="rounded-2xl bg-brand-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0b2f6e]"
-              >
-                Guardar estado
-              </button>
+            <div className="px-8 py-8">
+              <div className="mb-6 rounded-[28px] border border-slate-200 bg-slate-50/90 px-5 py-4">
+                <p className="text-sm leading-7 text-slate-500">
+                  Si el agente no esta levantado o no envia <span className="font-semibold text-brand-blue">heartbeat</span>,
+                  el sistema lo mostrara como <span className="font-semibold text-brand-blue">Agente offline</span>, aunque el
+                  RPA este configurado como activo.
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                {[
+                  { value: 'ACTIVE', label: 'Activo', helper: 'Queda disponible para operar cuando el agente realmente este online.' },
+                  { value: 'INACTIVE', label: 'Inactivo', helper: 'Lo deja fuera de operacion dentro del monitor.' },
+                  { value: 'MAINTENANCE', label: 'En revision', helper: 'Ideal para soporte, ajustes o validacion controlada.' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedLifecycleStatus(option.value as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE')}
+                    className={`rounded-[28px] border px-5 py-5 text-left transition ${
+                      selectedLifecycleStatus === option.value
+                        ? 'border-brand-blue bg-[linear-gradient(180deg,rgba(4,35,84,0.03),rgba(59,130,246,0.06))] shadow-[0_18px_34px_rgba(4,35,84,0.08)]'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-lg font-semibold text-brand-blue">{option.label}</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-400">{option.helper}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <AppBadge tone={getLifecycleTone(option.value)} className="text-sm">
+                          {option.label}
+                        </AppBadge>
+                        <span
+                          className={`grid h-6 w-6 place-items-center rounded-full border-2 transition ${
+                            selectedLifecycleStatus === option.value
+                              ? 'border-brand-blue bg-brand-blue text-white'
+                              : 'border-slate-300 text-transparent'
+                          }`}
+                        >
+                          •
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStatusModalRpa(null)}
+                  className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-brand-blue transition hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleUpdateLifecycle()}
+                  className="rounded-2xl bg-brand-blue px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(4,35,84,0.18)] transition hover:bg-[#0b2f6e]"
+                >
+                  Guardar estado
+                </button>
+              </div>
             </div>
           </div>
         </div>
