@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class MonitorController extends ApiController
@@ -58,6 +59,26 @@ class MonitorController extends ApiController
         ]);
 
         return $this->success($this->mapRpa($rpa, true), 'Detalle del RPA obtenido correctamente.');
+    }
+
+    public function updateRpaStatus(Request $request, Rpa $rpa): JsonResponse
+    {
+        $validated = $request->validate([
+            'lifecycle_status' => ['required', 'in:ACTIVE,INACTIVE,MAINTENANCE'],
+        ]);
+
+        $rpa->forceFill([
+            'lifecycle_status' => $validated['lifecycle_status'],
+        ])->save();
+
+        $rpa->load([
+            'defaultAgent',
+            'responsibleUser',
+            'executions' => fn ($query) => $query->latest('started_at')->limit(10),
+            'executions.incident',
+        ]);
+
+        return $this->success($this->mapRpa($rpa, true), 'Estado del RPA actualizado correctamente.');
     }
 
     public function executions(Request $request): JsonResponse
@@ -303,7 +324,19 @@ class MonitorController extends ApiController
             'status' => ['required', 'in:ACTIVE,INACTIVE'],
         ]);
 
-        $user = User::query()->create($validated);
+        $this->syncPostgresSequence('users');
+
+        try {
+            $user = User::query()->create($validated);
+        } catch (UniqueConstraintViolationException $exception) {
+            if (str_contains($exception->getMessage(), 'users_pkey')) {
+                $this->syncPostgresSequence('users');
+                $user = User::query()->create($validated);
+            } else {
+                throw $exception;
+            }
+        }
+
         $user->load('role');
 
         return $this->success($user, 'Usuario creado correctamente.', Response::HTTP_CREATED);
@@ -586,6 +619,24 @@ class MonitorController extends ApiController
             'Error' => 'ERROR',
             default => null,
         };
+    }
+
+    private function syncPostgresSequence(string $table, string $column = 'id'): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        $wrappedTable = str_replace("'", "''", $table);
+        $wrappedColumn = str_replace("'", "''", $column);
+
+        DB::statement("
+            SELECT setval(
+                pg_get_serial_sequence('{$wrappedTable}', '{$wrappedColumn}'),
+                COALESCE((SELECT MAX({$column}) FROM {$table}), 1),
+                true
+            )
+        ");
     }
 
     private function formatDuration(?int $durationMs): string

@@ -93,7 +93,7 @@ export function UsersPage() {
                     <td className="px-4 py-4">{user.lastAccess}</td>
                     <td className="px-4 py-4">
                       <div className="flex gap-2">
-                         <Link to="/users/new" className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600">Nuevo</Link>
+                         <Link to="/users/new" className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600">Editar</Link>
                         <button className="rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-500">Del.</button>
                       </div>
                     </td>
