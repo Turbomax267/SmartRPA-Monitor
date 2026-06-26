@@ -2,7 +2,7 @@ import { Bot, CalendarRange, ChevronDown, EllipsisVertical, Eye, Hand, Play, Sea
 import type { ChangeEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createJobRequest, listRpasRequest, updateRpaStatusRequest } from '../api/monitor.api'
+import { createJobRequest, listJobsRequest, listRpasRequest, updateRpaStatusRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 
@@ -26,6 +26,7 @@ export function RpasPage() {
     const saved = localStorage.getItem('smart-rpa-card-images')
     return saved ? JSON.parse(saved) : {}
   })
+  const [armedRpas, setArmedRpas] = useState<Record<string, boolean>>({})
 
   const getDisplayLifecycleStatus = (rpa: any) => rpa.lifecycleStatus
 
@@ -48,8 +49,54 @@ export function RpasPage() {
     setRpas(response.data)
   }
 
+  const loadJobs = async () => {
+    const response = await listJobsRequest()
+    const jobs = (response.data as Array<{
+      rpaId?: string | number
+      command?: string
+      status?: string
+      requestedAt?: string | null
+      id?: string | number
+    }>) ?? []
+
+    const latestByRpa = new Map<string, { armed: boolean; sortKey: string }>()
+
+    jobs.forEach((job) => {
+      if (!job.rpaId) return
+
+      const key = String(job.rpaId)
+      const command = String(job.command ?? '')
+      const status = String(job.status ?? '')
+      const sortKey = job.requestedAt ?? String(job.id ?? '')
+
+      if (!['PENDING', 'TAKEN', 'RUNNING', 'SUCCESS'].includes(status)) {
+        return
+      }
+
+      if (!['activate', 'deactivate', 'run'].includes(command)) {
+        return
+      }
+
+      const armed = command === 'activate' || command === 'run'
+      const current = latestByRpa.get(key)
+
+      if (!current || sortKey > current.sortKey) {
+        latestByRpa.set(key, {
+          armed,
+          sortKey,
+        })
+      }
+    })
+
+    const nextState: Record<string, boolean> = {}
+    latestByRpa.forEach((value, key) => {
+      nextState[key] = value.armed
+    })
+    setArmedRpas(nextState)
+  }
+
   useEffect(() => {
-    void loadRpas()
+    void Promise.all([loadRpas(), loadJobs()])
   }, [])
 
   useEffect(() => {
@@ -64,7 +111,23 @@ export function RpasPage() {
       command,
     })
     setMessage(`Orden enviada: ${command} para ${rpa.name}`)
-    await loadRpas()
+    await Promise.all([loadRpas(), loadJobs()])
+  }
+
+  const isArmed = (rpaId: string | number) => Boolean(armedRpas[String(rpaId)])
+
+  const handlePlayToggle = async (rpa: any) => {
+    if (isArmed(rpa.id)) {
+      await sendCommand(rpa, 'deactivate')
+      await loadJobs()
+      setMessage(`Ejecucion deshabilitada para ${rpa.name}`)
+      return
+    }
+
+    await sendCommand(rpa, 'activate')
+    await sendCommand(rpa, 'run')
+    await loadJobs()
+    setMessage(`Ejecucion habilitada y enviada para ${rpa.name}`)
   }
 
   const filteredRpas = useMemo(() => {
@@ -121,6 +184,7 @@ export function RpasPage() {
     setRpas((current) =>
       current.map((item) => (item.id === statusModalRpa.id ? response.data : item)),
     )
+    await loadJobs()
     setMessage(`Estado actualizado para ${statusModalRpa.name}: ${getLifecycleLabel(selectedLifecycleStatus)}`)
     setStatusModalRpa(null)
   }
@@ -207,13 +271,13 @@ export function RpasPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      void sendCommand(rpa, 'run')
+                      void handlePlayToggle(rpa)
                       setOpenMenuId(null)
                     }}
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-brand-blue transition hover:bg-slate-50"
                   >
                     <Play size={16} />
-                    Ejecutar ahora
+                    {isArmed(rpa.id) ? 'Detener ejecucion' : 'Ejecutar ahora'}
                   </button>
                   <button
                     type="button"
@@ -281,8 +345,13 @@ export function RpasPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => void sendCommand(rpa, 'run')}
-                className="rounded-2xl border border-slate-200 py-3 text-sm font-semibold text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5"
+                onClick={() => void handlePlayToggle(rpa)}
+                className={`rounded-2xl border py-3 text-sm font-semibold transition ${
+                  isArmed(rpa.id)
+                    ? 'border-emerald-500 bg-emerald-500 text-white hover:border-red-500 hover:bg-red-500'
+                    : 'border-slate-200 bg-white text-brand-blue hover:border-brand-blue/20 hover:bg-brand-blue/5'
+                }`}
+                title={isArmed(rpa.id) ? 'Click para detener ejecucion local' : 'Click para habilitar y ejecutar'}
               >
                 <Play size={18} className="mx-auto" />
               </button>

@@ -82,6 +82,7 @@ class RpaJobController extends ApiController
             ->with(['rpa:id,code,name,script_name,lifecycle_status', 'agent:id,code,name'])
             ->where('agent_id', $agent->id)
             ->where('status', 'PENDING')
+            ->orderByRaw("CASE command WHEN 'activate' THEN 0 WHEN 'deactivate' THEN 1 WHEN 'run' THEN 2 ELSE 3 END")
             ->orderBy('requested_at')
             ->orderBy('id')
             ->first();

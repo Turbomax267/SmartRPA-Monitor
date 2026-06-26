@@ -115,6 +115,11 @@ def worker():
                 time.sleep(POLL_INTERVAL)
                 continue
 
+            if job.get("command") == "run" and not state.is_enabled(job.get("rpaCode")):
+                logger.info("Job %s en espera: %s no esta habilitado localmente", job.get("id"), job.get("rpaCode"))
+                time.sleep(POLL_INTERVAL)
+                continue
+
             logger.info("Job recibido %s %s", job.get("id"), job.get("command"))
             process_job(api, state, job, logger)
         except Exception as exc:
