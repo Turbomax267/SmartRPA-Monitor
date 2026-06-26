@@ -178,6 +178,9 @@ class AgentController extends ApiController
             'metadata' => array_merge($execution->metadata ?? [], $validated['metadata'] ?? []),
         ])->save();
 
+        $incidentCategory = $this->normalizeIncidentCategory($validated['category'] ?? null);
+        $incidentStatus = 'OPEN';
+
         $incident = $execution->incident()->firstOrCreate(
             ['execution_id' => $execution->id],
             [
@@ -185,9 +188,9 @@ class AgentController extends ApiController
                 'rpa_id' => $execution->rpa_id,
                 'assigned_to' => $execution->rpa?->responsible_user_id,
                 'title' => 'Fallo en '.$execution->rpa?->name,
-                'category' => $validated['category'] ?? 'General',
+                'category' => $incidentCategory,
                 'severity' => strtoupper($validated['severity'] ?? 'HIGH'),
-                'status' => 'PENDING',
+                'status' => $incidentStatus,
                 'description' => $validated['error_message'],
                 'probable_cause' => 'Pendiente de revision tecnica.',
                 'detected_at' => $finishedAt,
@@ -212,6 +215,20 @@ class AgentController extends ApiController
             'execution' => $execution->fresh(),
             'incident_id' => $incident->id,
         ], 'Fallo registrado correctamente.');
+    }
+
+    private function normalizeIncidentCategory(?string $category): string
+    {
+        return match (strtoupper(trim((string) $category))) {
+            'CONNECTION', 'CONEXION' => 'CONNECTION',
+            'CREDENTIALS', 'CREDENCIALES' => 'CREDENTIALS',
+            'DATA', 'DATOS' => 'DATA',
+            'INTERFACE', 'INTERFAZ' => 'INTERFACE',
+            'TIMEOUT' => 'TIMEOUT',
+            'DATABASE', 'BASE_DE_DATOS' => 'DATABASE',
+            'BUSINESS_RULE', 'REGLA_NEGOCIO', 'SIMULADO', 'SIMULATION', 'GENERAL' => 'BUSINESS_RULE',
+            default => 'UNKNOWN',
+        };
     }
 
     private function resolveAgent(Request $request): RpaAgent
