@@ -5,7 +5,9 @@ function resolveApiBaseUrl() {
   const configuredUrl = import.meta.env.VITE_API_URL
 
   if (configuredUrl) {
-    return configuredUrl
+    return configuredUrl.endsWith('/api')
+      ? configuredUrl
+      : `${configuredUrl.replace(/\/+$/, '')}/api`
   }
 
   if (typeof window !== 'undefined') {
@@ -13,11 +15,11 @@ function resolveApiBaseUrl() {
 
     if (hostname.includes('onrender.com')) {
       if (hostname.includes('frontend')) {
-        return `${origin.replace('frontend', 'backend')}/api`
+        return `${origin.replace('frontend', 'backend').replace(/\/+$/, '')}/api`
       }
 
       if (hostname.includes('front')) {
-        return `${origin.replace('front', 'back')}/api`
+        return `${origin.replace('front', 'back').replace(/\/+$/, '')}/api`
       }
     }
   }

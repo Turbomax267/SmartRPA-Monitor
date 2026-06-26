@@ -27,7 +27,16 @@ export function LoginPage() {
       await login({ email, password }, { remember })
       navigate('/dashboard', { replace: true })
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'No se pudo iniciar sesion.'
+      const message =
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof error.message === 'string' &&
+        error.message === 'Network Error'
+          ? 'No se pudo conectar con la API. Verifica la URL del backend, CORS y que el servicio este arriba.'
+          : error instanceof Error
+            ? error.message
+            : 'No se pudo iniciar sesion.'
       const responseErrors =
         typeof error === 'object' &&
         error !== null &&
