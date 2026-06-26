@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, ClipboardPenLine, PlayCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { getIncidentRequest } from '../api/monitor.api'
+import type { IncidentDetail, IncidentTimelineStep } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { CircularMeter } from '../components/common/CircularMeter'
@@ -9,7 +10,7 @@ import { SurfaceCard } from '../components/common/SurfaceCard'
 
 export function IncidentDetailPage() {
   const { incidentId } = useParams()
-  const [incident, setIncident] = useState<any | null>(null)
+  const [incident, setIncident] = useState<IncidentDetail | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -83,7 +84,7 @@ export function IncidentDetailPage() {
           <SurfaceCard>
             <h2 className="text-2xl font-semibold text-brand-blue">Seguimiento tecnico</h2>
             <div className="mt-6 space-y-4">
-              {incident.timeline.map((step) => (
+              {incident.timeline.map((step: IncidentTimelineStep) => (
                 <div key={`${step.at}-${step.action}`} className="grid grid-cols-[0.9fr_0.9fr_0.8fr_1.3fr] gap-4 rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-500">
                   <span>{step.at}</span>
                   <span>{step.user}</span>

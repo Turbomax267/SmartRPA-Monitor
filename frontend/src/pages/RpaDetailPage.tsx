@@ -2,13 +2,20 @@ import { ArrowRight, Bot, Play, ShieldCheck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getRpaRequest } from '../api/monitor.api'
+import type {
+  RpaDetail,
+  RpaExecutionSummary,
+  RpaIncidentBreakdownItem,
+  RpaInfoItem,
+  RpaRecentHistoryItem,
+} from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 
 export function RpaDetailPage() {
   const { rpaId } = useParams()
-  const [rpa, setRpa] = useState<any | null>(null)
+  const [rpa, setRpa] = useState<RpaDetail | null>(null)
   const [activeTab, setActiveTab] = useState<'Resumen' | 'Ejecuciones' | 'Incidentes'>('Resumen')
 
   useEffect(() => {
@@ -30,7 +37,17 @@ export function RpaDetailPage() {
     [rpa],
   )
   const relatedIncidents = useMemo(
-    () => (rpa.incidentBreakdown ?? []).map((item: any, index: number) => ({ ...item, id: `${index}`, code: item.label, severity: 'MEDIUM', status: 'IN_REVIEW', detectedAt: `${item.total} casos` })).slice(0, 5),
+    () =>
+      (rpa.incidentBreakdown ?? [])
+        .map((item: RpaIncidentBreakdownItem, index: number) => ({
+          ...item,
+          id: `${index}`,
+          code: item.label,
+          severity: 'MEDIUM',
+          status: 'IN_REVIEW',
+          detectedAt: `${item.total} casos`,
+        }))
+        .slice(0, 5),
     [rpa],
   )
 
@@ -158,7 +175,7 @@ export function RpaDetailPage() {
         <SurfaceCard>
           <h2 className="text-2xl font-semibold text-brand-blue">Incidentes frecuentes</h2>
           <div className="mt-6 space-y-5">
-            {rpa.incidentBreakdown.map((item) => (
+            {rpa.incidentBreakdown.map((item: RpaIncidentBreakdownItem) => (
               <div key={item.label}>
                 <div className="mb-2 flex items-center justify-between text-sm">
                   <div>
@@ -185,14 +202,14 @@ export function RpaDetailPage() {
             ))}
           </div>
           <p className="mt-5 text-lg font-semibold text-brand-blue">
-            Total de incidentes <span className="ml-3">{rpa.incidentBreakdown.reduce((sum, item) => sum + item.total, 0)}</span>
+            Total de incidentes <span className="ml-3">{rpa.incidentBreakdown.reduce((sum: number, item: RpaIncidentBreakdownItem) => sum + item.total, 0)}</span>
           </p>
         </SurfaceCard>
 
         <SurfaceCard>
           <h2 className="text-2xl font-semibold text-brand-blue">Historial reciente</h2>
           <div className="mt-6 space-y-4">
-            {rpa.recentHistory.map((item) => (
+            {rpa.recentHistory.map((item: RpaRecentHistoryItem) => (
               <div key={item.label} className="grid grid-cols-[1.2fr_0.75fr_0.75fr_1fr] gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-500">
                 <span>{item.label}</span>
                 <AppBadge tone={item.status === 'SUCCESS' ? 'green' : 'red'} className="w-fit">
@@ -229,7 +246,7 @@ export function RpaDetailPage() {
             <div>
               <h3 className="text-xl font-semibold text-brand-blue">Informacion tecnica</h3>
               <div className="mt-5 space-y-3">
-                {rpa.technicalInfo.map((item) => (
+                {rpa.technicalInfo.map((item: RpaInfoItem) => (
                   <div key={item.label} className="flex justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm">
                     <span className="text-slate-400">{item.label}</span>
                     <span className="font-semibold text-brand-blue">{item.value}</span>
@@ -241,7 +258,7 @@ export function RpaDetailPage() {
             <div>
               <h3 className="text-xl font-semibold text-brand-blue">Configuracion del RPA</h3>
               <div className="mt-5 space-y-3">
-                {rpa.configurationInfo.map((item) => (
+                {rpa.configurationInfo.map((item: RpaInfoItem) => (
                   <div key={item.label} className="flex justify-between gap-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm">
                     <span className="text-slate-400">{item.label}</span>
                     <span className="font-semibold text-brand-blue">{item.value}</span>
@@ -263,7 +280,7 @@ export function RpaDetailPage() {
           </div>
         ) : activeTab === 'Ejecuciones' ? (
           <div className="mt-8 space-y-3">
-            {relatedExecutions.map((execution) => (
+            {relatedExecutions.map((execution: RpaExecutionSummary) => (
               <Link
                 key={execution.id}
                 to={`/executions/${execution.id}`}
@@ -281,7 +298,13 @@ export function RpaDetailPage() {
           </div>
         ) : (
           <div className="mt-8 space-y-3">
-            {relatedIncidents.map((incident) => (
+            {relatedIncidents.map((incident: {
+              id: string
+              code: string
+              severity: string
+              status: string
+              detectedAt: string
+            }) => (
               <Link
                 key={incident.id}
                 to={`/incidents/${incident.id}`}

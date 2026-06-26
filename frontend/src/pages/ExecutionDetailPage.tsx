@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowLeft, OctagonAlert, ShieldAlert, Sparkles, RotateCcw } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { getExecutionRequest } from '../api/monitor.api'
+import type { ExecutionDetail, ExecutionIncident, ExecutionLogItem } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { Breadcrumbs } from '../components/common/Breadcrumbs'
 import { CircularMeter } from '../components/common/CircularMeter'
@@ -9,7 +10,7 @@ import { SurfaceCard } from '../components/common/SurfaceCard'
 
 export function ExecutionDetailPage() {
   const { executionId } = useParams()
-  const [execution, setExecution] = useState<any | null>(null)
+  const [execution, setExecution] = useState<ExecutionDetail | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -25,8 +26,8 @@ export function ExecutionDetailPage() {
     return <div className="text-sm text-slate-400">Cargando detalle...</div>
   }
 
-  const incident = execution.incident ?? {
-    id: execution.incidentId,
+  const incident: ExecutionIncident = execution.incident ?? {
+    id: execution.incidentId ?? 'unknown-incident',
     code: '-',
     severity: 'LOW',
     status: 'PENDING',
@@ -120,7 +121,7 @@ export function ExecutionDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {execution.logs.map((log) => (
+                  {execution.logs.map((log: ExecutionLogItem) => (
                     <tr key={`${log.time}-${log.step}`} className="border-t border-slate-100 text-sm text-slate-500">
                       <td className="px-4 py-4">{log.time}</td>
                       <td className="px-4 py-4">
