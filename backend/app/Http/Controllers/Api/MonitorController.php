@@ -84,6 +84,12 @@ class MonitorController extends ApiController
     public function executions(Request $request): JsonResponse
     {
         $query = RpaExecution::query()->with(['rpa', 'agent', 'responsibleUser', 'incident'])->latest('started_at');
+        $perPage = max(1, min((int) $request->integer('per_page', 20), 100));
+        $page = max(1, (int) $request->integer('page', 1));
+
+        if ($request->filled('rpaId')) {
+            $query->where('rpa_id', $request->integer('rpaId'));
+        }
 
         if ($request->filled('search')) {
             $search = (string) $request->string('search');
@@ -113,12 +119,31 @@ class MonitorController extends ApiController
         }
 
         if ($request->filled('errorType') && $request->string('errorType')->value() !== 'Todos') {
-            $query->whereHas('incident', fn ($builder) => $builder->where('category', $request->string('errorType')->value()));
+            $errorType = $request->string('errorType')->value();
+            $query->where(function ($builder) use ($errorType): void {
+                $builder
+                    ->whereHas('incident', fn ($incidentQuery) => $incidentQuery->where('category', $errorType))
+                    ->orWhere('error_code', 'like', "%{$errorType}%");
+            });
         }
 
-        $executions = $query->limit(100)->get()->map(fn (RpaExecution $execution) => $this->mapExecution($execution))->values();
+        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $executions = collect($paginator->items())
+            ->map(fn (RpaExecution $execution) => $this->mapExecution($execution))
+            ->values();
 
-        return $this->success($executions, 'Ejecuciones obtenidas correctamente.');
+        return $this->success([
+            'items' => $executions,
+            'pagination' => [
+                'currentPage' => $paginator->currentPage(),
+                'perPage' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'lastPage' => $paginator->lastPage(),
+                'from' => $paginator->firstItem() ?? 0,
+                'to' => $paginator->lastItem() ?? 0,
+                'hasMorePages' => $paginator->hasMorePages(),
+            ],
+        ], 'Ejecuciones obtenidas correctamente.');
     }
 
     public function execution(RpaExecution $execution): JsonResponse
@@ -652,14 +677,23 @@ class MonitorController extends ApiController
 
         $lastSeenAt = $rpa->defaultAgent->last_seen_at;
         $timeoutSeconds = (int) env('RPA_AGENT_HEARTBEAT_TIMEOUT_SECONDS', 30);
+        $futureToleranceSeconds = (int) env('RPA_AGENT_FUTURE_TOLERANCE_SECONDS', 5);
 
         if (! $lastSeenAt) {
             return 'OFFLINE';
         }
 
         $lastSeen = $lastSeenAt instanceof CarbonInterface ? $lastSeenAt : Carbon::parse($lastSeenAt);
+        $now = now();
 
-        return $lastSeen->greaterThanOrEqualTo(now()->subSeconds($timeoutSeconds))
+        if ($lastSeen->greaterThan($now->copy()->addSeconds($futureToleranceSeconds))) {
+            return 'OFFLINE';
+        }
+
+        return $lastSeen->betweenIncluded(
+            $now->copy()->subSeconds($timeoutSeconds),
+            $now->copy()->addSeconds($futureToleranceSeconds)
+        )
             ? 'ONLINE'
             : 'OFFLINE';
     }

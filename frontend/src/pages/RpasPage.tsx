@@ -27,10 +27,7 @@ export function RpasPage() {
     return saved ? JSON.parse(saved) : {}
   })
 
-  const getDisplayLifecycleStatus = (rpa: any) => {
-    if (rpa.agentStatus !== 'ONLINE') return 'INACTIVE'
-    return rpa.lifecycleStatus
-  }
+  const getDisplayLifecycleStatus = (rpa: any) => rpa.lifecycleStatus
 
   const getLifecycleTone = (status: string) => {
     if (status === 'ACTIVE') return 'green'
