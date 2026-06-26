@@ -18,11 +18,11 @@ RPA_MODULES = {
 }
 
 RPA_CODES = {
-    "registrar_resultados": "RPA-003",
-    "publicar_certificados": "RPA-002",
-    "cambio_fecha": "RPA-004",
-    "crear_evaluacion": "RPA-001",
-    "cambio_nota": "RPA-005",
+    "publicar_certificados": "RPA-001",
+    "cambio_nota": "RPA-002",
+    "cambio_fecha": "RPA-003",
+    "registrar_resultados": "RPA-004",
+    "crear_evaluacion": "RPA-005",
 }
 
 RPA_BY_CODE = dict((code, name) for name, code in RPA_CODES.items())
