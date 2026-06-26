@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class AgentController extends ApiController
 {
@@ -222,11 +223,39 @@ class AgentController extends ApiController
         $agent = RpaAgent::query()
             ->where('is_active', true)
             ->get()
-            ->first(fn (RpaAgent $item) => $item->api_key_hash && Hash::check($token, $item->api_key_hash));
+            ->first(fn (RpaAgent $item) => $this->agentTokenMatches($token, $item->api_key_hash));
 
         abort_unless($agent, Response::HTTP_UNAUTHORIZED, 'Token de agente invalido.');
 
         return $agent;
+    }
+
+    private function agentTokenMatches(string $token, ?string $storedHash): bool
+    {
+        if (! $storedHash) {
+            return false;
+        }
+
+        try {
+            if (Hash::check($token, $storedHash)) {
+                return true;
+            }
+        } catch (Throwable) {
+        }
+
+        if (hash_equals($storedHash, $token)) {
+            return true;
+        }
+
+        if (preg_match('/^[a-f0-9]{32}$/i', $storedHash) === 1) {
+            return hash_equals(strtolower($storedHash), md5($token));
+        }
+
+        if (preg_match('/^[a-f0-9]{40}$/i', $storedHash) === 1) {
+            return hash_equals(strtolower($storedHash), sha1($token));
+        }
+
+        return false;
     }
 
     private function guardExecutionOwnership(RpaExecution $execution, RpaAgent $agent): void
