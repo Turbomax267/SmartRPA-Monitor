@@ -1,8 +1,8 @@
-import { Bot, CalendarRange, ChevronDown, EllipsisVertical, Eye, Play, Search, SquarePen, Waypoints } from 'lucide-react'
+import { Bot, CalendarRange, ChevronDown, EllipsisVertical, Eye, Hand, Play, Search, SquarePen, Waypoints, X } from 'lucide-react'
 import type { ChangeEvent } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { createJobRequest, listRpasRequest } from '../api/monitor.api'
+import { createJobRequest, listRpasRequest, updateRpaStatusRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 
@@ -20,10 +20,31 @@ export function RpasPage() {
   const [openMenuId, setOpenMenuId] = useState<string | number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [selectedRpaId, setSelectedRpaId] = useState<string | number | null>(null)
+  const [statusModalRpa, setStatusModalRpa] = useState<any | null>(null)
+  const [selectedLifecycleStatus, setSelectedLifecycleStatus] = useState<'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'>('INACTIVE')
   const [customImages, setCustomImages] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem('smart-rpa-card-images')
     return saved ? JSON.parse(saved) : {}
   })
+
+  const getDisplayLifecycleStatus = (rpa: any) => {
+    if (rpa.agentStatus !== 'ONLINE') return 'INACTIVE'
+    return rpa.lifecycleStatus
+  }
+
+  const getLifecycleTone = (status: string) => {
+    if (status === 'ACTIVE') return 'green'
+    if (status === 'MAINTENANCE' || status === 'UNDER_REVIEW') return 'amber'
+    if (status === 'INACTIVE') return 'slate'
+    return 'red'
+  }
+
+  const getLifecycleLabel = (status: string) => {
+    if (status === 'ACTIVE') return 'Activo'
+    if (status === 'MAINTENANCE' || status === 'UNDER_REVIEW') return 'En revision'
+    if (status === 'INACTIVE') return 'Inactivo'
+    return 'Error'
+  }
 
   const loadRpas = async () => {
     const response = await listRpasRequest()
@@ -57,9 +78,9 @@ export function RpasPage() {
         item.processName.toLowerCase().includes(query.toLowerCase())
       const matchesStatus =
         status === 'Todos' ||
-        (status === 'Activo' && item.lifecycleStatus === 'ACTIVE') ||
-        (status === 'En revision' && ['UNDER_REVIEW', 'MAINTENANCE'].includes(item.lifecycleStatus)) ||
-        (status === 'Inactivo' && item.lifecycleStatus === 'INACTIVE') ||
+        (status === 'Activo' && getDisplayLifecycleStatus(item) === 'ACTIVE') ||
+        (status === 'En revision' && ['UNDER_REVIEW', 'MAINTENANCE'].includes(getDisplayLifecycleStatus(item))) ||
+        (status === 'Inactivo' && getDisplayLifecycleStatus(item) === 'INACTIVE') ||
         (status === 'Error' && ['ERROR', 'OFFLINE'].includes(item.operationalStatus))
       const matchesProcess = process === 'Todos' || item.processName.includes(process)
       const matchesResponsible = responsible === 'Todos' || item.responsible.includes(responsible)
@@ -86,6 +107,25 @@ export function RpasPage() {
     }
     reader.readAsDataURL(file)
     event.target.value = ''
+  }
+
+  const handleOpenStatusModal = (rpa: any) => {
+    setStatusModalRpa(rpa)
+    setSelectedLifecycleStatus((rpa.lifecycleStatus as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE') ?? 'INACTIVE')
+  }
+
+  const handleUpdateLifecycle = async () => {
+    if (!statusModalRpa) return
+
+    const response = await updateRpaStatusRequest(statusModalRpa.id, {
+      lifecycle_status: selectedLifecycleStatus,
+    })
+
+    setRpas((current) =>
+      current.map((item) => (item.id === statusModalRpa.id ? response.data : item)),
+    )
+    setMessage(`Estado actualizado para ${statusModalRpa.name}: ${getLifecycleLabel(selectedLifecycleStatus)}`)
+    setStatusModalRpa(null)
   }
 
   return (
@@ -202,23 +242,9 @@ export function RpasPage() {
 
             <div className="mt-4">
               <AppBadge
-                tone={
-                  rpa.lifecycleStatus === 'ACTIVE'
-                    ? 'green'
-                    : rpa.lifecycleStatus === 'UNDER_REVIEW' || rpa.lifecycleStatus === 'MAINTENANCE'
-                      ? 'amber'
-                    : rpa.lifecycleStatus === 'INACTIVE'
-                        ? 'slate'
-                        : 'red'
-                }
+                tone={getLifecycleTone(getDisplayLifecycleStatus(rpa))}
                 >
-                  {rpa.lifecycleStatus === 'ACTIVE'
-                    ? 'Activo'
-                    : rpa.lifecycleStatus === 'UNDER_REVIEW' || rpa.lifecycleStatus === 'MAINTENANCE'
-                      ? 'En revision'
-                    : rpa.lifecycleStatus === 'INACTIVE'
-                      ? 'Inactivo'
-                      : 'Error'}
+                  {getLifecycleLabel(getDisplayLifecycleStatus(rpa))}
               </AppBadge>
               <div className="mt-2">
                 <AppBadge tone={rpa.agentStatus === 'ONLINE' ? 'green' : 'slate'}>
@@ -244,10 +270,11 @@ export function RpasPage() {
 
             <div className="mt-6 grid grid-cols-3 gap-3">
               <button
-                onClick={() => void sendCommand(rpa, 'run')}
+                type="button"
+                onClick={() => handleOpenStatusModal(rpa)}
                 className="rounded-2xl border border-slate-200 py-3 text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5"
               >
-                <Play size={18} className="mx-auto" />
+                <Hand size={18} className="mx-auto" />
               </button>
               <Link
                 to={`/rpas/${rpa.id}`}
@@ -256,15 +283,80 @@ export function RpasPage() {
                 Ver
               </Link>
               <button
-                onClick={() => void sendCommand(rpa, rpa.lifecycleStatus === 'ACTIVE' ? 'deactivate' : 'activate')}
+                type="button"
+                onClick={() => void sendCommand(rpa, 'run')}
                 className="rounded-2xl border border-slate-200 py-3 text-sm font-semibold text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5"
               >
-                {rpa.lifecycleStatus === 'ACTIVE' ? 'Desactivar' : 'Activar'}
+                <Play size={18} className="mx-auto" />
               </button>
             </div>
           </SurfaceCard>
         ))}
       </div>
+
+      {statusModalRpa && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-[32px] bg-white p-7 shadow-[0_32px_80px_rgba(15,23,42,0.22)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold text-brand-blue">Cambiar estado del RPA</h3>
+                <p className="mt-2 text-sm text-slate-400">{statusModalRpa.name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatusModalRpa(null)}
+                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-brand-blue"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-3">
+              {[
+                { value: 'ACTIVE', label: 'Activo', helper: 'Visible como habilitado cuando el agente este online.' },
+                { value: 'INACTIVE', label: 'Inactivo', helper: 'Bloquea su uso operativo desde el monitor.' },
+                { value: 'MAINTENANCE', label: 'En revision', helper: 'Ideal para mantenimiento o validacion.' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setSelectedLifecycleStatus(option.value as 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE')}
+                  className={`rounded-2xl border px-4 py-4 text-left transition ${
+                    selectedLifecycleStatus === option.value
+                      ? 'border-brand-blue bg-brand-blue/5 shadow-soft'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-brand-blue">{option.label}</p>
+                      <p className="mt-1 text-sm text-slate-400">{option.helper}</p>
+                    </div>
+                    <AppBadge tone={getLifecycleTone(option.value)}>{option.label}</AppBadge>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-7 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setStatusModalRpa(null)}
+                className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-brand-blue transition hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleUpdateLifecycle()}
+                className="rounded-2xl bg-brand-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0b2f6e]"
+              >
+                Guardar estado
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

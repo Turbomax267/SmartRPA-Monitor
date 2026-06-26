@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('/rpas', [MonitorController::class, 'rpas']);
     Route::get('/rpas/{rpa}', [MonitorController::class, 'rpa']);
+    Route::patch('/rpas/{rpa}/status', [MonitorController::class, 'updateRpaStatus']);
     Route::get('/executions', [MonitorController::class, 'executions']);
     Route::get('/executions/{execution}', [MonitorController::class, 'execution']);
     Route::get('/incidents', [MonitorController::class, 'incidents']);

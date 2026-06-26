@@ -32,9 +32,9 @@ export function Sidebar() {
   const { logout, user } = useAuth()
 
   return (
-    <aside className="sticky top-0 flex h-screen w-full max-w-[272px] flex-col overflow-hidden bg-brand-blue text-white">
+    <aside className="sticky top-0 flex h-screen w-full max-w-[300px] flex-col overflow-hidden bg-brand-blue text-white">
       <div className="border-b border-white/10 px-5 py-5">
-        <img src={logo} alt="SmartRPA Monitor" className="h-24 w-full object-contain object-left" />
+        <img src={logo} alt="SmartRPA Monitor" className="h-40 w-full object-contain object-left" />
       </div>
 
       <div className="mt-6 px-3">

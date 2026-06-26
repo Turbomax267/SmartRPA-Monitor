@@ -210,6 +210,11 @@ export async function getRpaRequest(rpaId: string) {
   return data
 }
 
+export async function updateRpaStatusRequest(rpaId: string | number, payload: { lifecycle_status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' }) {
+  const { data } = await api.patch<ApiResponse<RpaDetail>>(`/rpas/${rpaId}/status`, payload)
+  return data
+}
+
 export async function listExecutionsRequest() {
   const { data } = await api.get<ApiResponse<MonitorListItem[]>>('/executions')
   return data
