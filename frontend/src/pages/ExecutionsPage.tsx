@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import type { ExecutionListItem, MonitorListItem, PaginationMeta } from '../api/monitor.api'
 import { listExecutionsRequest, listRpasRequest } from '../api/monitor.api'
@@ -42,6 +42,20 @@ export function ExecutionsPage() {
     hasMorePages: false,
   })
 
+  const loadExecutions = useCallback(async () => {
+    const response = await listExecutionsRequest({
+      page,
+      per_page: 20,
+      rpaId: selectedRpaId !== 'Todos' ? selectedRpaId : undefined,
+      search: search || undefined,
+      status,
+      responsible,
+      errorType,
+    })
+    setExecutions(response.data.items)
+    setPagination(response.data.pagination)
+  }, [errorType, page, responsible, search, selectedRpaId, status])
+
   useEffect(() => {
     const loadRpas = async () => {
       const response = await listRpasRequest()
@@ -52,22 +66,25 @@ export function ExecutionsPage() {
   }, [])
 
   useEffect(() => {
-    const load = async () => {
-      const response = await listExecutionsRequest({
-        page,
-        per_page: 20,
-        rpaId: selectedRpaId !== 'Todos' ? selectedRpaId : undefined,
-        search: search || undefined,
-        status,
-        responsible,
-        errorType,
-      })
-      setExecutions(response.data.items)
-      setPagination(response.data.pagination)
+    void loadExecutions()
+  }, [loadExecutions])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void loadExecutions()
+    }, 5000)
+
+    const handleFocus = () => {
+      void loadExecutions()
     }
 
-    void load()
-  }, [errorType, page, responsible, search, selectedRpaId, status])
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [loadExecutions])
 
   useEffect(() => {
     setPage(1)
