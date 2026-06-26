@@ -98,11 +98,8 @@ export function RpaDetailPage() {
               Ejecutar
             </span>
           </button>
-          <button className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-semibold text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5">
-            Editar
-          </button>
           <Link
-            to="/executions"
+            to={`/executions?rpaId=${rpa.id}`}
             className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-semibold text-brand-blue transition hover:border-brand-blue/20 hover:bg-brand-blue/5"
           >
             Ver ejecuciones
@@ -249,7 +246,7 @@ export function RpaDetailPage() {
               </div>
             ))}
           </div>
-          <Link to="/executions" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-info">
+          <Link to={`/executions?rpaId=${rpa.id}`} className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-info">
             Ver todas las ejecuciones <ArrowRight size={16} />
           </Link>
         </SurfaceCard>

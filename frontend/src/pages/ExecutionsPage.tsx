@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { listExecutionsRequest } from '../api/monitor.api'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import type { ExecutionListItem, MonitorListItem, PaginationMeta } from '../api/monitor.api'
+import { listExecutionsRequest, listRpasRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 
@@ -22,45 +23,71 @@ const filters = {
 }
 
 export function ExecutionsPage() {
-  const [executions, setExecutions] = useState<any[]>([])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [executions, setExecutions] = useState<ExecutionListItem[]>([])
+  const [rpaOptions, setRpaOptions] = useState<MonitorListItem[]>([])
   const [search, setSearch] = useState('')
+  const [selectedRpaId, setSelectedRpaId] = useState(searchParams.get('rpaId') ?? 'Todos')
   const [status, setStatus] = useState('Todos')
   const [responsible, setResponsible] = useState('Todos')
   const [errorType, setErrorType] = useState('Todos')
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    currentPage: 1,
+    perPage: 20,
+    total: 0,
+    lastPage: 1,
+    from: 0,
+    to: 0,
+    hasMorePages: false,
+  })
+
+  useEffect(() => {
+    const loadRpas = async () => {
+      const response = await listRpasRequest()
+      setRpaOptions(response.data)
+    }
+
+    void loadRpas()
+  }, [])
 
   useEffect(() => {
     const load = async () => {
-      const response = await listExecutionsRequest()
-      setExecutions(response.data)
+      const response = await listExecutionsRequest({
+        page,
+        per_page: 20,
+        rpaId: selectedRpaId !== 'Todos' ? selectedRpaId : undefined,
+        search: search || undefined,
+        status,
+        responsible,
+        errorType,
+      })
+      setExecutions(response.data.items)
+      setPagination(response.data.pagination)
     }
 
     void load()
-  }, [])
+  }, [errorType, page, responsible, search, selectedRpaId, status])
 
-  const filteredExecutions = useMemo(() => {
-    return executions.filter((item) => {
-      const matchesSearch =
-        !search ||
-        item.rpaName.toLowerCase().includes(search.toLowerCase()) ||
-        item.process.toLowerCase().includes(search.toLowerCase())
-      const matchesStatus =
-        status === 'Todos' ||
-        (status === 'Exitoso' && item.status === 'SUCCESS') ||
-        (status === 'Fallido' && item.status === 'FAILED') ||
-        (status === 'En revision' && item.status === 'REVIEW')
-      const matchesResponsible = responsible === 'Todos' || item.responsible === responsible
-      const matchesError = errorType === 'Todos' || item.errorType === errorType
+  useEffect(() => {
+    setPage(1)
+  }, [search, selectedRpaId, status, responsible, errorType])
 
-      return matchesSearch && matchesStatus && matchesResponsible && matchesError
-    })
-  }, [errorType, executions, responsible, search, status])
+  useEffect(() => {
+    if (selectedRpaId !== 'Todos') {
+      setSearchParams({ rpaId: String(selectedRpaId) })
+      return
+    }
+
+    setSearchParams({})
+  }, [selectedRpaId, setSearchParams])
 
   const handleExport = () => {
     downloadCsv(
       'ejecuciones-smart-rpa.csv',
       [
         ['Fecha', 'Hora', 'RPA', 'Proceso', 'Estado', 'Duracion', 'Resultado', 'Responsable', 'Tipo Error'],
-        ...filteredExecutions.map((execution) => [
+        ...executions.map((execution) => [
           execution.dateLabel,
           execution.timeLabel,
           execution.rpaName,
@@ -82,7 +109,7 @@ export function ExecutionsPage() {
         <p className="mt-2 text-lg text-brand-blue">Historial completo de todas las ejecuciones RPA</p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr_0.9fr_0.9fr_0.74fr]">
+      <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr_0.9fr_0.9fr_0.9fr_0.74fr]">
         <input
           className="rounded-2xl border border-white/70 bg-white/92 px-4 py-4 text-sm text-brand-blue shadow-soft outline-none placeholder:text-slate-400"
           value={search}
@@ -93,6 +120,18 @@ export function ExecutionsPage() {
           className="rounded-2xl border border-white/70 bg-white/92 px-4 py-4 text-sm text-brand-blue shadow-soft outline-none placeholder:text-slate-400"
           placeholder="Fecha fin"
         />
+        <select
+          value={selectedRpaId}
+          onChange={(event) => setSelectedRpaId(event.target.value)}
+          className="rounded-2xl border border-white/70 bg-white/92 px-4 py-4 text-sm text-brand-blue shadow-soft outline-none"
+        >
+          <option value="Todos">Todos los RPA</option>
+          {rpaOptions.map((rpa) => (
+            <option key={String(rpa.id)} value={String(rpa.id)}>
+              {String(rpa.name)}
+            </option>
+          ))}
+        </select>
         {[status, responsible, errorType].map((value, index) => {
           const options = index === 0 ? filters.status : index === 1 ? filters.responsible : filters.errorType
           const setter = index === 0 ? setStatus : index === 1 ? setResponsible : setErrorType
@@ -128,7 +167,7 @@ export function ExecutionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredExecutions.map((execution) => (
+              {executions.map((execution) => (
                 <tr key={execution.id} className="border-b border-slate-100 text-sm text-slate-500 transition hover:bg-slate-50/80">
                   <td className="px-5 py-4">
                     <p>{execution.dateLabel}</p>
@@ -153,10 +192,26 @@ export function ExecutionsPage() {
           </table>
         </div>
         <div className="flex items-center justify-between px-5 py-4 text-sm text-slate-400">
-          <span>Mostrando 1-{filteredExecutions.length} de 1248 ejecuciones</span>
+          <span>
+            Mostrando {pagination.from}-{pagination.to} de {pagination.total} ejecuciones
+          </span>
           <div className="flex gap-2">
-            <button className="rounded-xl border border-slate-200 px-4 py-2 text-brand-blue">Anterior</button>
-            <button className="rounded-xl bg-brand-blue px-4 py-2 text-white">Siguiente</button>
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={pagination.currentPage <= 1}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-brand-blue disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(pagination.lastPage, current + 1))}
+              disabled={pagination.currentPage >= pagination.lastPage}
+              className="rounded-xl bg-brand-blue px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+            </button>
           </div>
         </div>
       </SurfaceCard>

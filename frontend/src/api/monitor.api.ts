@@ -5,6 +5,36 @@ export interface MonitorListItem {
   [key: string]: unknown
 }
 
+export interface PaginationMeta {
+  currentPage: number
+  perPage: number
+  total: number
+  lastPage: number
+  from: number
+  to: number
+  hasMorePages: boolean
+}
+
+export interface ExecutionListItem {
+  id: string | number
+  publicCode: string
+  rpaId: string | number
+  rpaName: string
+  process: string
+  status: string
+  result: string
+  responsible: string
+  dateLabel: string
+  timeLabel: string
+  durationLabel: string
+  errorType: string
+}
+
+export interface ExecutionsResponsePayload {
+  items: ExecutionListItem[]
+  pagination: PaginationMeta
+}
+
 export interface AnalysisLogLine {
   time: string
   level: 'INFO' | 'WARNING' | 'ERROR' | string
@@ -215,8 +245,16 @@ export async function updateRpaStatusRequest(rpaId: string | number, payload: { 
   return data
 }
 
-export async function listExecutionsRequest() {
-  const { data } = await api.get<ApiResponse<MonitorListItem[]>>('/executions')
+export async function listExecutionsRequest(params?: {
+  page?: number
+  per_page?: number
+  rpaId?: string | number
+  search?: string
+  status?: string
+  responsible?: string
+  errorType?: string
+}) {
+  const { data } = await api.get<ApiResponse<ExecutionsResponsePayload>>('/executions', { params })
   return data
 }
 
