@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthService
@@ -29,7 +30,16 @@ class AuthService
             ]);
         }
 
-        $passwordIsValid = Hash::check($credentials['password'], $user->password);
+        try {
+            $passwordIsValid = Hash::check($credentials['password'], $user->password);
+        } catch (RuntimeException $exception) {
+            Log::warning('Hash de password invalido detectado durante login.', [
+                'email' => $user->email,
+                'error' => $exception->getMessage(),
+            ]);
+
+            $passwordIsValid = false;
+        }
 
         if (! $passwordIsValid && $this->shouldRepairDemoPassword($user->email, $credentials['password'], $user->password)) {
             $user->forceFill([
