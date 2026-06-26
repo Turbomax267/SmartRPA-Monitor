@@ -33,11 +33,11 @@ export function Sidebar() {
 
   return (
     <aside className="sticky top-0 flex h-screen w-full max-w-[360px] flex-col overflow-hidden bg-brand-blue text-white">
-      <div className="border-b border-white/10 px-5 py-5">
-        <img src={logo} alt="SmartRPA Monitor" className="h-64 w-full object-contain object-left" />
+      <div className="border-b border-white/10 px-5 py-4">
+        <img src={logo} alt="SmartRPA Monitor" className="h-44 w-full object-contain object-left" />
       </div>
 
-      <div className="mt-6 px-3">
+      <div className="mt-4 min-h-0 flex-1 overflow-y-auto px-3 pb-4">
         <p className="px-4 text-[11px] font-semibold uppercase tracking-[0.35em] text-white/35">
           Menu principal
         </p>
@@ -67,16 +67,17 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <button
-        type="button"
-        onClick={() => void logout()}
-        className="mx-3 mt-auto flex items-center gap-3 rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/8"
-      >
-        <LogOut size={18} />
-        <span>Cerrar sesion</span>
-      </button>
+      <div className="border-t border-white/10 px-3 pb-5 pt-4">
+        <button
+          type="button"
+          onClick={() => void logout()}
+          className="flex w-full items-center gap-3 rounded-2xl border border-white/10 px-4 py-3 text-sm font-medium text-white/85 transition hover:bg-white/8"
+        >
+          <LogOut size={18} />
+          <span>Cerrar sesion</span>
+        </button>
 
-      <div className="mx-3 mt-4 flex items-center gap-3 border-t border-white/10 px-1 pb-5 pt-5">
+        <div className="mt-4 flex items-center gap-3 px-1 pt-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-yellow font-bold text-brand-blue">
           {user?.name?.slice(0, 2).toUpperCase() ?? 'AD'}
         </div>
@@ -87,6 +88,7 @@ export function Sidebar() {
         <button type="button" className="rounded-full p-2 text-white/50 transition hover:bg-white/10 hover:text-white">
           <ChevronDown size={16} />
         </button>
+        </div>
       </div>
     </aside>
   )
