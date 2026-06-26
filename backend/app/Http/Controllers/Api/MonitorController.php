@@ -395,6 +395,16 @@ class MonitorController extends ApiController
                 ['label' => 'Propietario', 'value' => $rpa->responsibleUser?->name ?? 'Sin asignar'],
             ],
             'executions' => $detailed ? $executions->map(fn (RpaExecution $execution) => $this->mapExecution($execution))->values() : [],
+            'incidents' => $detailed
+                ? Incident::query()
+                    ->with(['rpa', 'execution', 'assignedUser', 'aiAnalysis'])
+                    ->where('rpa_id', $rpa->id)
+                    ->latest('detected_at')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn (Incident $incident) => $this->mapIncident($incident))
+                    ->values()
+                : [],
         ];
     }
 

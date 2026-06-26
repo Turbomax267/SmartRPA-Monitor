@@ -1,5 +1,6 @@
-import { Bot, CalendarRange, EllipsisVertical, Play, Search, SquarePen, Waypoints } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Bot, CalendarRange, ChevronDown, EllipsisVertical, Eye, Play, Search, SquarePen, Waypoints } from 'lucide-react'
+import type { ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { createJobRequest, listRpasRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
@@ -16,6 +17,13 @@ export function RpasPage() {
   const [process, setProcess] = useState('Todos')
   const [responsible, setResponsible] = useState('Todos')
   const [message, setMessage] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [selectedRpaId, setSelectedRpaId] = useState<string | number | null>(null)
+  const [customImages, setCustomImages] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('smart-rpa-card-images')
+    return saved ? JSON.parse(saved) : {}
+  })
 
   const loadRpas = async () => {
     const response = await listRpasRequest()
@@ -25,6 +33,10 @@ export function RpasPage() {
   useEffect(() => {
     void loadRpas()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('smart-rpa-card-images', JSON.stringify(customImages))
+  }, [customImages])
 
   const sendCommand = async (rpa: any, command: 'run' | 'activate' | 'deactivate') => {
     setMessage(null)
@@ -46,9 +58,9 @@ export function RpasPage() {
       const matchesStatus =
         status === 'Todos' ||
         (status === 'Activo' && item.lifecycleStatus === 'ACTIVE') ||
-        (status === 'En revision' && item.lifecycleStatus === 'UNDER_REVIEW') ||
+        (status === 'En revision' && ['UNDER_REVIEW', 'MAINTENANCE'].includes(item.lifecycleStatus)) ||
         (status === 'Inactivo' && item.lifecycleStatus === 'INACTIVE') ||
-        (status === 'Error' && item.lifecycleStatus === 'ERROR')
+        (status === 'Error' && ['ERROR', 'OFFLINE'].includes(item.operationalStatus))
       const matchesProcess = process === 'Todos' || item.processName.includes(process)
       const matchesResponsible = responsible === 'Todos' || item.responsible.includes(responsible)
 
@@ -56,8 +68,29 @@ export function RpasPage() {
     })
   }, [process, query, responsible, rpas, status])
 
+  const handleSelectImage = (rpaId: string | number) => {
+    setSelectedRpaId(rpaId)
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !selectedRpaId) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCustomImages((current) => ({
+        ...current,
+        [String(selectedRpaId)]: String(reader.result),
+      }))
+    }
+    reader.readAsDataURL(file)
+    event.target.value = ''
+  }
+
   return (
     <div className="space-y-6">
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
       <div className="flex items-start justify-between gap-6">
         <div>
           <h1 className="text-4xl font-bold tracking-tight text-brand-blue">RPA / Bots</h1>
@@ -85,16 +118,18 @@ export function RpasPage() {
           const setter = index === 0 ? setStatus : index === 1 ? setProcess : setResponsible
 
           return (
-            <select
-              key={value + index}
-              value={value}
-              onChange={(event) => setter(event.target.value)}
-              className="rounded-2xl border border-white/70 bg-white/92 px-4 py-4 text-sm text-brand-blue shadow-soft outline-none"
-            >
-              {options.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
+            <div key={value + index} className="relative">
+              <select
+                value={value}
+                onChange={(event) => setter(event.target.value)}
+                className="w-full appearance-none rounded-2xl border border-white/70 bg-white/92 px-4 py-4 pr-11 text-sm text-brand-blue shadow-soft outline-none transition hover:border-brand-blue/10"
+              >
+                {options.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+              <ChevronDown size={18} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-brand-blue" />
+            </div>
           )
         })}
       </div>
@@ -103,14 +138,60 @@ export function RpasPage() {
 
       <div className="grid gap-5 xl:grid-cols-4">
         {filteredRpas.map((rpa) => (
-          <SurfaceCard key={rpa.id} hoverable className="p-5">
+          <SurfaceCard key={rpa.id} hoverable className="relative overflow-visible p-5">
             <div className="flex items-start justify-between">
-              <div className="grid h-28 w-28 place-items-center rounded-[2rem] bg-[radial-gradient(circle_at_top,_rgba(230,238,255,1),_rgba(244,246,252,1)_65%)]">
+              <div className="relative grid h-28 w-28 place-items-center rounded-[2rem] bg-[radial-gradient(circle_at_top,_rgba(230,238,255,1),_rgba(244,246,252,1)_65%)]">
                 <Bot size={54} className="text-brand-blue" />
+                <div className="absolute -bottom-3 -right-3 grid h-16 w-16 place-items-center overflow-hidden rounded-full border border-white/80 bg-white shadow-soft">
+                  {customImages[String(rpa.id)] ? (
+                    <img src={customImages[String(rpa.id)]} alt={`Vista ${rpa.name}`} className="h-full w-full object-cover" />
+                  ) : (
+                    <SquarePen size={20} className="text-brand-info" />
+                  )}
+                </div>
               </div>
-              <button className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-brand-blue">
+              <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenMenuId((current) => (current === rpa.id ? null : rpa.id))}
+                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-brand-blue"
+              >
                 <EllipsisVertical size={18} />
               </button>
+              {openMenuId === rpa.id && (
+                <div className="absolute right-0 top-11 z-20 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_18px_34px_rgba(15,23,42,0.12)]">
+                  <Link
+                    to={`/rpas/${rpa.id}`}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-brand-blue transition hover:bg-slate-50"
+                  >
+                    <Eye size={16} />
+                    Ver detalle
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void sendCommand(rpa, 'run')
+                      setOpenMenuId(null)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-brand-blue transition hover:bg-slate-50"
+                  >
+                    <Play size={16} />
+                    Ejecutar ahora
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSelectImage(rpa.id)
+                      setOpenMenuId(null)
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-brand-blue transition hover:bg-slate-50"
+                  >
+                    <SquarePen size={16} />
+                    Subir imagen
+                  </button>
+                </div>
+              )}
+              </div>
             </div>
 
             <div className="mt-5">
@@ -124,17 +205,17 @@ export function RpasPage() {
                 tone={
                   rpa.lifecycleStatus === 'ACTIVE'
                     ? 'green'
-                    : rpa.lifecycleStatus === 'UNDER_REVIEW'
+                    : rpa.lifecycleStatus === 'UNDER_REVIEW' || rpa.lifecycleStatus === 'MAINTENANCE'
                       ? 'amber'
-                      : rpa.lifecycleStatus === 'INACTIVE'
+                    : rpa.lifecycleStatus === 'INACTIVE'
                         ? 'slate'
                         : 'red'
                 }
-              >
-                {rpa.lifecycleStatus === 'ACTIVE'
-                  ? 'Activo'
-                  : rpa.lifecycleStatus === 'UNDER_REVIEW'
-                    ? 'En revision'
+                >
+                  {rpa.lifecycleStatus === 'ACTIVE'
+                    ? 'Activo'
+                    : rpa.lifecycleStatus === 'UNDER_REVIEW' || rpa.lifecycleStatus === 'MAINTENANCE'
+                      ? 'En revision'
                     : rpa.lifecycleStatus === 'INACTIVE'
                       ? 'Inactivo'
                       : 'Error'}

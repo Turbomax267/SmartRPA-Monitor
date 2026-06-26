@@ -2,6 +2,7 @@ import {
   Activity,
   Bot,
   BrainCircuit,
+  ChevronDown,
   ChartColumn,
   FileText,
   LayoutDashboard,
@@ -18,7 +19,7 @@ const navigationItems = [
   { label: 'Dashboard', path: '/dashboard', match: '/dashboard', icon: LayoutDashboard },
   { label: 'RPA / Bots', path: '/rpas', match: '/rpas', icon: Bot },
   { label: 'Ejecuciones', path: '/executions', match: '/executions', icon: Activity, exact: true },
-  { label: 'Logs', path: '/executions/ex-247', match: '/executions/', icon: FileText },
+  { label: 'Logs', path: '/executions', match: '/executions/', icon: FileText },
   { label: 'Alertas', path: '/incidents', match: '/incidents', icon: ShieldAlert },
   { label: 'Analisis IA', path: '/ai-analysis', match: '/ai-analysis', icon: BrainCircuit },
   { label: 'Metricas', path: '/metrics', match: '/metrics', icon: ChartColumn },
@@ -31,13 +32,9 @@ export function Sidebar() {
   const { logout, user } = useAuth()
 
   return (
-    <aside className="sticky top-0 flex h-screen w-full max-w-[248px] flex-col overflow-hidden bg-brand-blue text-white">
-      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-        <img src={logo} alt="SmartRPA Monitor" className="h-11 w-11 rounded-2xl object-contain" />
-        <div>
-          <p className="text-[1.7rem] font-bold leading-none">SmartRPA</p>
-          <p className="mt-1 text-sm text-brand-yellow">Monitor</p>
-        </div>
+    <aside className="sticky top-0 flex h-screen w-full max-w-[272px] flex-col overflow-hidden bg-brand-blue text-white">
+      <div className="border-b border-white/10 px-5 py-5">
+        <img src={logo} alt="SmartRPA Monitor" className="h-24 w-full object-contain object-left" />
       </div>
 
       <div className="mt-6 px-3">
@@ -56,7 +53,7 @@ export function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={`group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-medium transition duration-300 ${
+                className={`group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-base font-medium transition duration-300 ${
                   selected
                     ? 'bg-brand-yellow text-brand-blue shadow-[0_18px_34px_rgba(250,214,52,0.25)]'
                     : 'text-white/78 hover:bg-white/8 hover:text-white'
@@ -83,10 +80,13 @@ export function Sidebar() {
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-yellow font-bold text-brand-blue">
           {user?.name?.slice(0, 2).toUpperCase() ?? 'AD'}
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">{user?.name ?? 'Usuario'}</p>
           <p className="text-xs text-white/55">{user?.role?.display_name ?? 'Administrador'}</p>
         </div>
+        <button type="button" className="rounded-full p-2 text-white/50 transition hover:bg-white/10 hover:text-white">
+          <ChevronDown size={16} />
+        </button>
       </div>
     </aside>
   )

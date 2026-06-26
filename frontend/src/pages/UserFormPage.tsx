@@ -1,21 +1,31 @@
 import { Eye, EyeOff } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { createUserRequest, usersRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 import { getRoleCard, roleCards } from '../mocks/monitorData'
 
-const rolePermissionSummary = {
+const rolePermissionSummary: Record<string, string[]> = {
   ADMIN: ['Consultar ejecuciones', 'Revisar incidentes', 'Acceder a metricas', 'Gestionar usuarios', 'Configurar sistema'],
   TECH: ['Consultar ejecuciones', 'Revisar incidentes', 'Acceder a metricas', 'Gestionar usuarios', 'Configurar sistema'],
   MANAGER: ['Consultar ejecuciones', 'Revisar incidentes', 'Acceder a metricas', 'Gestionar usuarios', 'Configurar sistema'],
 }
 
 export function UserFormPage() {
+  const navigate = useNavigate()
   const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'TECH' | 'MANAGER'>('ADMIN')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [password, setPassword] = useState('')
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE')
+  const [roles, setRoles] = useState<Array<{ id: number; name: string; display_name: string }>>([])
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const passwordStrength = useMemo(() => {
     if (password.length >= 12) return 'Muy fuerte'
@@ -25,6 +35,51 @@ export function UserFormPage() {
   }, [password])
 
   const role = getRoleCard(selectedRole)
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await usersRequest()
+      setRoles(response.data.roles)
+    }
+
+    void load()
+  }, [])
+
+  const selectedRoleId =
+    roles.find((item) =>
+      (selectedRole === 'ADMIN' && item.name === 'ADMINISTRATOR') ||
+      (selectedRole === 'MANAGER' && item.name === 'PROCESS_MANAGER') ||
+      (selectedRole === 'TECH' && item.name === 'RPA_TECHNICIAN'),
+    )?.id ?? roles[0]?.id
+
+  const handleSubmit = async () => {
+    try {
+      setSaving(true)
+      setError(null)
+      setMessage(null)
+
+      if (!selectedRoleId) {
+        setError('No hay roles disponibles para crear el usuario.')
+        return
+      }
+
+      await createUserRequest({
+        name,
+        email,
+        password,
+        password_confirmation: passwordConfirmation,
+        role_id: selectedRoleId,
+        status,
+      })
+
+      setMessage('Usuario creado correctamente.')
+      setTimeout(() => navigate('/users'), 700)
+    } catch (submitError: any) {
+      setError(submitError?.response?.data?.message ?? 'No se pudo crear el usuario.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -38,29 +93,25 @@ export function UserFormPage() {
           <SurfaceCard>
             <h2 className="text-2xl font-semibold text-brand-blue">Informacion del Usuario</h2>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {[
-                ['Nombres *', 'Ej. Carlos Alberto'],
-                ['Apellidos *', 'Ej. Mendoza Garcia'],
-                ['Correo electronico *', 'Ej. carlos.mendoza@empresa.com'],
-                ['Nombre de usuario *', 'Ej. carlos.mendoza'],
-                ['Area *', 'Selecciona un area'],
-                ['Cargo *', 'Ej. Analista de Procesos'],
-                ['Telefono (opcional)', 'Ej. +52 55 1234 5678'],
-              ].map(([label, placeholder], index) => (
-                <div key={label} className={index === 2 ? 'md:col-span-2' : ''}>
-                  <label className="mb-2 block text-sm font-semibold text-brand-blue">{label}</label>
-                  {label.includes('Area') || label.includes('Cargo') ? (
-                    <select className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-brand-blue outline-none">
-                      <option>{placeholder}</option>
-                    </select>
-                  ) : (
-                    <input
-                      placeholder={placeholder}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-brand-blue outline-none placeholder:text-slate-400"
-                    />
-                  )}
-                </div>
-              ))}
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-semibold text-brand-blue">Nombre completo *</label>
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Ej. Carlos Alberto Mendoza Garcia"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-brand-blue outline-none placeholder:text-slate-400"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-semibold text-brand-blue">Correo electronico *</label>
+                <input
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="Ej. carlos.mendoza@empresa.com"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-brand-blue outline-none placeholder:text-slate-400"
+                />
+              </div>
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-brand-blue">Contrasena *</label>
@@ -83,6 +134,8 @@ export function UserFormPage() {
                 <div className="flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
+                    value={passwordConfirmation}
+                    onChange={(event) => setPasswordConfirmation(event.target.value)}
                     placeholder="Repite la contrasena"
                     className="w-full bg-transparent py-4 text-sm text-brand-blue outline-none placeholder:text-slate-400"
                   />
@@ -104,6 +157,9 @@ export function UserFormPage() {
               <AppBadge tone="green">Fuerte</AppBadge>
               <AppBadge tone="green">{passwordStrength}</AppBadge>
             </div>
+
+            {error && <div className="mt-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
+            {message && <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
           </SurfaceCard>
 
           <SurfaceCard>
@@ -111,8 +167,20 @@ export function UserFormPage() {
             <div className="mt-6 space-y-4 text-sm text-slate-500">
               <div className="grid grid-cols-[1fr_0.8fr_0.8fr] items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3">
                 <span className="font-semibold text-brand-blue">Estado del usuario *</span>
-                <button className="rounded-2xl bg-emerald-50 px-4 py-2 font-semibold text-emerald-600">Activo</button>
-                <button className="rounded-2xl bg-white px-4 py-2 font-semibold text-slate-400">Inactivo</button>
+                <button
+                  type="button"
+                  onClick={() => setStatus('ACTIVE')}
+                  className={`rounded-2xl px-4 py-2 font-semibold ${status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-white text-slate-400'}`}
+                >
+                  Activo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatus('INACTIVE')}
+                  className={`rounded-2xl px-4 py-2 font-semibold ${status === 'INACTIVE' ? 'bg-slate-200 text-slate-700' : 'bg-white text-slate-400'}`}
+                >
+                  Inactivo
+                </button>
               </div>
               {[
                 'Enviar credenciales por correo',
@@ -134,18 +202,35 @@ export function UserFormPage() {
           </SurfaceCard>
 
           <div className="grid gap-4 xl:grid-cols-3">
-            <button className="rounded-2xl bg-brand-blue px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(4,35,84,0.18)] transition hover:-translate-y-0.5">
-              Guardar Usuario
-            </button>
+              <button
+                type="button"
+                onClick={() => void handleSubmit()}
+                disabled={saving}
+                className="rounded-2xl bg-brand-blue px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(4,35,84,0.18)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+               {saving ? 'Guardando...' : 'Guardar Usuario'}
+              </button>
             <Link
               to="/users"
               className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-center text-sm font-semibold text-brand-blue transition hover:bg-brand-blue/5"
             >
               Cancelar
             </Link>
-            <button className="rounded-2xl border border-brand-info/25 bg-white px-5 py-4 text-sm font-semibold text-brand-info transition hover:bg-brand-info/5">
-              Limpiar formulario
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setName('')
+                  setEmail('')
+                  setPassword('')
+                  setPasswordConfirmation('')
+                  setStatus('ACTIVE')
+                  setError(null)
+                  setMessage(null)
+                }}
+                className="rounded-2xl border border-brand-info/25 bg-white px-5 py-4 text-sm font-semibold text-brand-info transition hover:bg-brand-info/5"
+              >
+                Limpiar formulario
+              </button>
           </div>
         </div>
 
@@ -156,6 +241,7 @@ export function UserFormPage() {
             <div className="mt-6 space-y-3">
               {roleCards.map((item) => (
                 <button
+                  type="button"
                   key={item.id}
                   onClick={() => setSelectedRole(item.id)}
                   className={`grid w-full grid-cols-[56px_1fr_24px] items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition ${
@@ -209,15 +295,17 @@ export function UserFormPage() {
               </div>
               <div className="flex justify-between">
                 <span>Estado del usuario</span>
-                <AppBadge tone="green">Activo</AppBadge>
+                <AppBadge tone={status === 'ACTIVE' ? 'green' : 'slate'}>
+                  {status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                </AppBadge>
               </div>
               <div className="flex justify-between">
-                <span>Area asignada</span>
-                <AppBadge tone="slate">No seleccionada</AppBadge>
+                <span>Correo</span>
+                <AppBadge tone="slate">{email || 'Pendiente'}</AppBadge>
               </div>
               <div className="flex justify-between">
                 <span>Metodo de notificacion</span>
-                <AppBadge tone="blue">Por correo electronico</AppBadge>
+                <AppBadge tone="blue">Correo electronico</AppBadge>
               </div>
             </div>
           </SurfaceCard>

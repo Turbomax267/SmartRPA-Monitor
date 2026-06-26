@@ -61,6 +61,7 @@ export interface ExecutionDetail {
   publicCode: string
   rpaName: string
   process: string
+  status: string
   agent: string
   responsible: string
   triggerType: string
@@ -77,6 +78,8 @@ export interface ExecutionDetail {
   incident?: ExecutionIncident | null
   analysisId?: string | number
   logs: ExecutionLogItem[]
+  startedAt?: string | null
+  finishedAt?: string | null
 }
 
 export interface IncidentTimelineStep {
@@ -91,6 +94,8 @@ export interface IncidentDetail {
   code: string
   title: string
   category: string
+  severity: string
+  status: string
   rpaName: string
   executionCode: string
   executionId: string | number
@@ -160,6 +165,39 @@ export interface RpaDetail {
   technicalInfo: RpaInfoItem[]
   configurationInfo: RpaInfoItem[]
   executions?: RpaExecutionSummary[]
+  incidents?: IncidentDetail[]
+  lifecycleStatus?: string
+  agentStatus?: string
+  operationalStatus?: string
+  defaultAgentId?: string | number | null
+}
+
+export interface MonitorRoleOption {
+  id: number
+  name: string
+  display_name: string
+  description?: string | null
+}
+
+export interface MonitorUserOption {
+  id: string
+  firstName: string
+  lastName: string
+  name: string
+  username: string
+  email: string
+  area: string
+  position: string
+  initials: string
+  role: string
+  status: string
+  lastAccess: string
+  notifyByEmail: boolean
+}
+
+export interface UsersResponsePayload {
+  users: MonitorUserOption[]
+  roles: MonitorRoleOption[]
 }
 
 export async function listRpasRequest() {
@@ -203,7 +241,19 @@ export async function metricsSummaryRequest() {
 }
 
 export async function usersRequest() {
-  const { data } = await api.get<ApiResponse<any>>('/users')
+  const { data } = await api.get<ApiResponse<UsersResponsePayload>>('/users')
+  return data
+}
+
+export async function createUserRequest(payload: {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+  role_id: number
+  status: 'ACTIVE' | 'INACTIVE'
+}) {
+  const { data } = await api.post<ApiResponse<any>>('/users', payload)
   return data
 }
 
