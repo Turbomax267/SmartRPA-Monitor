@@ -50,6 +50,27 @@ class AuthTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
+    public function test_demo_user_with_placeholder_hash_is_repaired_on_login(): void
+    {
+        $user = User::query()->where('email', env('ADMIN_EMAIL', 'admin@smartrpa.local'))->firstOrFail();
+
+        $user->forceFill([
+            'password' => '$2y$12$abcdefghijklmnopqrstuv',
+        ])->save();
+
+        $response = $this->postJson('/api/auth/login', [
+            'email' => $user->email,
+            'password' => env('ADMIN_PASSWORD', 'SmartRPA123*'),
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true);
+
+        $user->refresh();
+
+        $this->assertTrue(Hash::check(env('ADMIN_PASSWORD', 'SmartRPA123*'), $user->password));
+    }
+
     public function test_inactive_user_cannot_login(): void
     {
         $role = Role::query()->firstWhere('name', 'PROCESS_MANAGER');
