@@ -45,6 +45,14 @@
       "nota_actual": 12,
       "nota_nueva": 16,
       "estado": "actualizado"
+    },
+    {
+      "id": 1,
+      "alumno": "Alumno 03",
+      "curso": "Curso C",
+      "nota_actual": 12,
+      "nota_nueva": 16,
+      "estado": "actualizado"
     }
   ]
 }

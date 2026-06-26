@@ -184,6 +184,7 @@ export interface RpaDetail {
   executionMode: string
   assignedAgent: string
   lastExecutionLabel: string
+  lastExecutionAt?: string | null
   uptime: number
   environment: string
   nextExecution: string
@@ -198,6 +199,7 @@ export interface RpaDetail {
   incidents?: IncidentDetail[]
   lifecycleStatus?: string
   agentStatus?: string
+  agentLastSeenAt?: string | null
   operationalStatus?: string
   defaultAgentId?: string | number | null
 }
