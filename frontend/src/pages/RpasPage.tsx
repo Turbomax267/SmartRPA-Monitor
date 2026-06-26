@@ -1,6 +1,6 @@
 import { Bot, CalendarRange, ChevronDown, EllipsisVertical, Eye, Hand, Play, Search, SquarePen, Waypoints, X } from 'lucide-react'
 import type { ChangeEvent } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { createJobRequest, listJobsRequest, listRpasRequest, updateRpaStatusRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
@@ -44,12 +44,12 @@ export function RpasPage() {
     return 'Error'
   }
 
-  const loadRpas = async () => {
+  const loadRpas = useCallback(async () => {
     const response = await listRpasRequest()
     setRpas(response.data)
-  }
+  }, [])
 
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     const response = await listJobsRequest()
     const jobs = (response.data as Array<{
       rpaId?: string | number
@@ -73,11 +73,11 @@ export function RpasPage() {
         return
       }
 
-      if (!['activate', 'deactivate', 'run'].includes(command)) {
+      if (!['activate', 'deactivate'].includes(command)) {
         return
       }
 
-      const armed = command === 'activate' || command === 'run'
+      const armed = command === 'activate'
       const current = latestByRpa.get(key)
 
       if (!current || sortKey > current.sortKey) {
@@ -93,11 +93,25 @@ export function RpasPage() {
       nextState[key] = value.armed
     })
     setArmedRpas(nextState)
-  }
+  }, [])
 
   useEffect(() => {
     void Promise.all([loadRpas(), loadJobs()])
-  }, [])
+  }, [loadJobs, loadRpas])
+
+  useEffect(() => {
+    const refresh = () => {
+      void Promise.all([loadRpas(), loadJobs()])
+    }
+
+    const interval = window.setInterval(refresh, 5000)
+    window.addEventListener('focus', refresh)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refresh)
+    }
+  }, [loadJobs, loadRpas])
 
   useEffect(() => {
     localStorage.setItem('smart-rpa-card-images', JSON.stringify(customImages))

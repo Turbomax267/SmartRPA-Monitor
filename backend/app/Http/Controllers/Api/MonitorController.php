@@ -683,8 +683,8 @@ class MonitorController extends ApiController
             return 'OFFLINE';
         }
 
-        $lastSeen = $lastSeenAt instanceof CarbonInterface ? $lastSeenAt : Carbon::parse($lastSeenAt);
-        $now = now();
+        $lastSeen = ($lastSeenAt instanceof CarbonInterface ? $lastSeenAt->copy() : Carbon::parse($lastSeenAt))->utc();
+        $now = now('UTC');
 
         if ($lastSeen->greaterThan($now->copy()->addSeconds($futureToleranceSeconds))) {
             return 'OFFLINE';
@@ -717,7 +717,9 @@ class MonitorController extends ApiController
             return '-';
         }
 
-        $instance = $date instanceof CarbonInterface ? $date : Carbon::parse($date);
+        $instance = $date instanceof CarbonInterface
+            ? $date->copy()->setTimezone(config('app.timezone'))
+            : Carbon::parse($date)->setTimezone(config('app.timezone'));
 
         return $instance->format('d/m/Y H:i');
     }
@@ -728,7 +730,9 @@ class MonitorController extends ApiController
             return 'Sin registros';
         }
 
-        $instance = $date instanceof CarbonInterface ? $date : Carbon::parse($date);
+        $instance = $date instanceof CarbonInterface
+            ? $date->copy()->setTimezone(config('app.timezone'))
+            : Carbon::parse($date)->setTimezone(config('app.timezone'));
 
         if ($instance->isToday()) {
             return 'Hoy '.$instance->format('H:i');
@@ -738,7 +742,7 @@ class MonitorController extends ApiController
             return 'Ayer '.$instance->format('H:i');
         }
 
-        return $instance->diffForHumans(now(), [
+        return $instance->diffForHumans(now(config('app.timezone')), [
             'parts' => 2,
             'short' => true,
             'syntax' => CarbonInterface::DIFF_RELATIVE_TO_NOW,
@@ -751,9 +755,11 @@ class MonitorController extends ApiController
             return 'Sin ejecucion';
         }
 
-        $instance = $date instanceof CarbonInterface ? $date : Carbon::parse($date);
+        $instance = $date instanceof CarbonInterface
+            ? $date->copy()->setTimezone(config('app.timezone'))
+            : Carbon::parse($date)->setTimezone(config('app.timezone'));
 
-        return $instance->diffForHumans(now(), [
+        return $instance->diffForHumans(now(config('app.timezone')), [
             'parts' => 2,
             'short' => true,
             'syntax' => CarbonInterface::DIFF_RELATIVE_TO_NOW,
