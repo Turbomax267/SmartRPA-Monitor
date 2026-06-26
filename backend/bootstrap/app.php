@@ -5,8 +5,10 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
@@ -47,5 +49,26 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => 'No autenticado.',
                 'errors' => [],
             ], Response::HTTP_UNAUTHORIZED);
+        });
+
+        $exceptions->report(function (Throwable $exception) {
+            Log::error('Excepcion no controlada en API.', [
+                'type' => $exception::class,
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ]);
+        });
+
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrio un error interno en la API.',
+                'errors' => [],
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         });
     })->create();
