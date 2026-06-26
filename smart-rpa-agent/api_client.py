@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import requests
@@ -22,6 +23,7 @@ class ApiClient:
                 "agent_code": agent_code,
                 "status": status,
                 "current_rpa": current_rpa,
+                "sent_at": datetime.now().astimezone().isoformat(),
             },
         )
 

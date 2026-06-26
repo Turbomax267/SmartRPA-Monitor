@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -14,9 +15,7 @@ class CampusSimulado:
 
     def registrar_resultados(self) -> Dict[str, Any]:
         state = self._load()
-        item = self._take_first(state["pendientes"]["resultados"])
-        if not item:
-            raise ValueError("No hay resultados pendientes")
+        item = self._take_first(state["pendientes"]["resultados"]) or deepcopy(self._default_state()["pendientes"]["resultados"][0])
         item["estado"] = "procesado"
         state["resultados"].append(item)
         self._save(state)
@@ -24,9 +23,7 @@ class CampusSimulado:
 
     def publicar_certificado(self) -> Dict[str, Any]:
         state = self._load()
-        item = self._take_first(state["pendientes"]["certificados"])
-        if not item:
-            raise ValueError("No hay certificados pendientes")
+        item = self._take_first(state["pendientes"]["certificados"]) or deepcopy(self._default_state()["pendientes"]["certificados"][0])
         item["estado"] = "publicado"
         state["certificados"].append(item)
         self._save(state)
@@ -34,9 +31,7 @@ class CampusSimulado:
 
     def cambiar_fecha(self) -> Dict[str, Any]:
         state = self._load()
-        item = self._take_first(state["pendientes"]["fechas"])
-        if not item:
-            raise ValueError("No hay cambios de fecha pendientes")
+        item = self._take_first(state["pendientes"]["fechas"]) or deepcopy(self._default_state()["pendientes"]["fechas"][0])
         item["estado"] = "actualizado"
         state["fechas"].append(item)
         self._save(state)
@@ -44,9 +39,7 @@ class CampusSimulado:
 
     def crear_evaluacion(self) -> Dict[str, Any]:
         state = self._load()
-        item = self._take_first(state["pendientes"]["evaluaciones"])
-        if not item:
-            raise ValueError("No hay evaluaciones pendientes")
+        item = self._take_first(state["pendientes"]["evaluaciones"]) or deepcopy(self._default_state()["pendientes"]["evaluaciones"][0])
         item["estado"] = "creado"
         state["evaluaciones"].append(item)
         self._save(state)
@@ -54,9 +47,7 @@ class CampusSimulado:
 
     def cambiar_nota(self) -> Dict[str, Any]:
         state = self._load()
-        item = self._take_first(state["pendientes"]["notas"])
-        if not item:
-            raise ValueError("No hay cambios de nota pendientes")
+        item = self._take_first(state["pendientes"]["notas"]) or deepcopy(self._default_state()["pendientes"]["notas"][0])
         item["estado"] = "actualizado"
         state["notas"].append(item)
         self._save(state)
