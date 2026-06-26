@@ -119,7 +119,7 @@ class RpaJobController extends ApiController
         return $this->success($this->mapJob($job->fresh(['agent', 'rpa', 'requester', 'execution'])), 'Job marcado como running.');
     }
 
-    public function success(Request $request, RpaJob $job): JsonResponse
+    public function complete(Request $request, RpaJob $job): JsonResponse
     {
         $agent = $this->resolveAgent($request);
         $this->guardAgentJob($job, $agent);

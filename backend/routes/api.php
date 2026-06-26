@@ -45,6 +45,6 @@ Route::prefix('agent')->group(function (): void {
     Route::get('/jobs/next', [RpaJobController::class, 'next']);
     Route::post('/jobs/{job}/take', [RpaJobController::class, 'take']);
     Route::post('/jobs/{job}/running', [RpaJobController::class, 'running']);
-    Route::post('/jobs/{job}/success', [RpaJobController::class, 'success']);
+    Route::post('/jobs/{job}/success', [RpaJobController::class, 'complete']);
     Route::post('/jobs/{job}/fail', [RpaJobController::class, 'fail']);
 });
