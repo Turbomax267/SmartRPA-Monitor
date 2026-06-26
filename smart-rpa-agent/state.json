@@ -2,6 +2,6 @@
   "enabled_rpas": {
     "RPA-002": true,
     "RPA-005": true,
-    "RPA-003": true
+    "RPA-003": false
   }
 }
