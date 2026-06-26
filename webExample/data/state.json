@@ -1,13 +1,6 @@
 {
   "pendientes": {
-    "resultados": [
-      {
-        "id": 1,
-        "alumno": "Alumno 01",
-        "curso": "Curso A",
-        "nota": 18
-      }
-    ],
+    "resultados": [],
     "certificados": [
       {
         "id": 1,
@@ -30,19 +23,28 @@
         "tipo": "Final"
       }
     ],
-    "notas": [
-      {
-        "id": 1,
-        "alumno": "Alumno 03",
-        "curso": "Curso C",
-        "nota_actual": 12,
-        "nota_nueva": 16
-      }
-    ]
+    "notas": []
   },
-  "resultados": [],
+  "resultados": [
+    {
+      "id": 1,
+      "alumno": "Alumno 01",
+      "curso": "Curso A",
+      "nota": 18,
+      "estado": "procesado"
+    }
+  ],
   "certificados": [],
   "fechas": [],
   "evaluaciones": [],
-  "notas": []
+  "notas": [
+    {
+      "id": 1,
+      "alumno": "Alumno 03",
+      "curso": "Curso C",
+      "nota_actual": 12,
+      "nota_nueva": 16,
+      "estado": "actualizado"
+    }
+  ]
 }
