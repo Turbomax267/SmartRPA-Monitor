@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getRpaRequest } from '../api/monitor.api'
 import type {
+  IncidentDetail,
   RpaDetail,
   RpaExecutionSummary,
   RpaIncidentBreakdownItem,
@@ -16,40 +17,58 @@ import { SurfaceCard } from '../components/common/SurfaceCard'
 export function RpaDetailPage() {
   const { rpaId } = useParams()
   const [rpa, setRpa] = useState<RpaDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'Resumen' | 'Ejecuciones' | 'Incidentes'>('Resumen')
+
+  const relatedExecutions = useMemo(
+    () => (rpa?.executions ?? []).slice(0, 5),
+    [rpa],
+  )
+  const relatedIncidents = useMemo(
+    () => (rpa?.incidents ?? []).slice(0, 5),
+    [rpa],
+  )
 
   useEffect(() => {
     const load = async () => {
-      if (!rpaId) return
-      const response = await getRpaRequest(rpaId)
-      setRpa(response.data)
+      if (!rpaId) {
+        setError('No se encontro el identificador del RPA.')
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await getRpaRequest(rpaId)
+        setRpa(response.data)
+      } catch {
+        setError('No se pudo cargar el detalle del RPA.')
+      } finally {
+        setLoading(false)
+      }
     }
 
     void load()
   }, [rpaId])
 
-  if (!rpa) {
+  if (loading) {
     return <div className="text-sm text-slate-400">Cargando RPA...</div>
   }
 
-  const relatedExecutions = useMemo(
-    () => (rpa.executions ?? []).slice(0, 5),
-    [rpa],
-  )
-  const relatedIncidents = useMemo(
-    () =>
-      (rpa.incidentBreakdown ?? [])
-        .map((item: RpaIncidentBreakdownItem, index: number) => ({
-          ...item,
-          id: `${index}`,
-          code: item.label,
-          severity: 'MEDIUM',
-          status: 'IN_REVIEW',
-          detectedAt: `${item.total} casos`,
-        }))
-        .slice(0, 5),
-    [rpa],
-  )
+  if (error || !rpa) {
+    return <div className="text-sm text-red-500">{error ?? 'No se pudo cargar el RPA.'}</div>
+  }
+
+  const lifecycleTone =
+    rpa.lifecycleStatus === 'ACTIVE'
+      ? 'green'
+      : rpa.lifecycleStatus === 'MAINTENANCE' || rpa.lifecycleStatus === 'UNDER_REVIEW'
+        ? 'amber'
+        : rpa.lifecycleStatus === 'INACTIVE'
+          ? 'slate'
+          : 'red'
 
   return (
     <div className="space-y-6">
@@ -58,7 +77,15 @@ export function RpaDetailPage() {
           <Breadcrumbs items={[{ label: 'RPA / Bots', to: '/rpas' }, { label: 'Detalle' }]} />
           <div className="flex flex-wrap items-center gap-4">
             <h1 className="text-4xl font-bold tracking-tight text-brand-blue">{rpa.name}</h1>
-            <AppBadge tone="green">Activo</AppBadge>
+            <AppBadge tone={lifecycleTone}>
+              {rpa.lifecycleStatus === 'ACTIVE'
+                ? 'Activo'
+                : rpa.lifecycleStatus === 'MAINTENANCE' || rpa.lifecycleStatus === 'UNDER_REVIEW'
+                  ? 'En revision'
+                  : rpa.lifecycleStatus === 'INACTIVE'
+                    ? 'Inactivo'
+                    : 'Error'}
+            </AppBadge>
             <AppBadge tone="blue">Proceso</AppBadge>
             <AppBadge tone="slate">{rpa.processName}</AppBadge>
           </div>
@@ -112,7 +139,9 @@ export function RpaDetailPage() {
         <SurfaceCard>
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-semibold text-brand-blue">Estado del bot</h2>
-            <AppBadge tone="green">Activo</AppBadge>
+            <AppBadge tone={rpa.agentStatus === 'ONLINE' ? 'green' : 'slate'}>
+              {rpa.agentStatus === 'ONLINE' ? 'Agente online' : 'Agente offline'}
+            </AppBadge>
           </div>
 
           <div className="mt-6 space-y-4 text-sm text-slate-500">
@@ -298,13 +327,9 @@ export function RpaDetailPage() {
           </div>
         ) : (
           <div className="mt-8 space-y-3">
-            {relatedIncidents.map((incident: {
-              id: string
-              code: string
-              severity: string
-              status: string
-              detectedAt: string
-            }) => (
+            {relatedIncidents.length === 0 ? (
+              <div className="rounded-2xl bg-slate-50 px-5 py-4 text-sm text-slate-400">No hay incidentes recientes para este RPA.</div>
+            ) : relatedIncidents.map((incident: IncidentDetail) => (
               <Link
                 key={incident.id}
                 to={`/incidents/${incident.id}`}

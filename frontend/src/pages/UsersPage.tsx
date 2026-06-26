@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { MonitorUserOption } from '../api/monitor.api'
 import { usersRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 import { getRoleCard, roleCards } from '../mocks/monitorData'
 
 export function UsersPage() {
-  const [monitorUsers, setMonitorUsers] = useState<any[]>([])
+  const [monitorUsers, setMonitorUsers] = useState<MonitorUserOption[]>([])
 
   useEffect(() => {
     const load = async () => {
-      const response = await usersRequest()
-      setMonitorUsers(response.data.users)
+       const response = await usersRequest()
+       setMonitorUsers(response.data.users)
     }
 
     void load()
@@ -72,7 +73,7 @@ export function UsersPage() {
             </thead>
             <tbody>
               {monitorUsers.map((user) => {
-                const role = getRoleCard(user.role)
+                 const role = getRoleCard(user.role as 'ADMIN' | 'TECH' | 'MANAGER')
 
                 return (
                   <tr key={user.id} className="border-b border-slate-100 text-sm text-slate-500 transition hover:bg-slate-50/80">
@@ -92,9 +93,7 @@ export function UsersPage() {
                     <td className="px-4 py-4">{user.lastAccess}</td>
                     <td className="px-4 py-4">
                       <div className="flex gap-2">
-                        <Link to="/users/new" className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600">
-                          Ed.
-                        </Link>
+                         <Link to="/users/new" className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-600">Nuevo</Link>
                         <button className="rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-500">Del.</button>
                       </div>
                     </td>

@@ -4,6 +4,17 @@ import { listExecutionsRequest } from '../api/monitor.api'
 import { AppBadge } from '../components/common/AppBadge'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 const filters = {
   status: ['Todos', 'Exitoso', 'Fallido', 'En revision'],
   responsible: ['Todos', 'J. Rodriguez', 'M. Torres', 'A. Garcia', 'R. Silva', 'P. Mendez'],
@@ -44,6 +55,26 @@ export function ExecutionsPage() {
     })
   }, [errorType, executions, responsible, search, status])
 
+  const handleExport = () => {
+    downloadCsv(
+      'ejecuciones-smart-rpa.csv',
+      [
+        ['Fecha', 'Hora', 'RPA', 'Proceso', 'Estado', 'Duracion', 'Resultado', 'Responsable', 'Tipo Error'],
+        ...filteredExecutions.map((execution) => [
+          execution.dateLabel,
+          execution.timeLabel,
+          execution.rpaName,
+          execution.process,
+          execution.status,
+          execution.durationLabel,
+          execution.result,
+          execution.responsible,
+          execution.errorType,
+        ]),
+      ],
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -79,7 +110,7 @@ export function ExecutionsPage() {
             </select>
           )
         })}
-        <button className="rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(34,197,94,0.18)] transition hover:-translate-y-0.5">
+        <button onClick={handleExport} className="rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(34,197,94,0.18)] transition hover:-translate-y-0.5">
           Exportar
         </button>
       </div>

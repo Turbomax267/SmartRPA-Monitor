@@ -11,19 +11,38 @@ import { SurfaceCard } from '../components/common/SurfaceCard'
 export function AiAnalysisPage() {
   const { analysisId } = useParams()
   const [analysis, setAnalysis] = useState<AnalysisDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
-      if (!analysisId) return
-      const response = await getAnalysisRequest(analysisId)
-      setAnalysis(response.data)
+      if (!analysisId) {
+        setError('Selecciona un analisis desde una ejecucion o un incidente para ver el detalle.')
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await getAnalysisRequest(analysisId)
+        setAnalysis(response.data)
+      } catch {
+        setError('No se pudo cargar el analisis solicitado.')
+      } finally {
+        setLoading(false)
+      }
     }
 
     void load()
   }, [analysisId])
 
-  if (!analysis) {
+  if (loading) {
     return <div className="text-sm text-slate-400">Cargando analisis...</div>
+  }
+
+  if (error || !analysis) {
+    return <div className="text-sm text-brand-blue">{error ?? 'No se pudo cargar el analisis.'}</div>
   }
 
   return (
@@ -150,7 +169,7 @@ export function AiAnalysisPage() {
             <div className="mt-6 space-y-4 text-sm text-slate-500">
               <div className="flex justify-between">
                 <span>Codigo</span>
-                <span className="font-semibold text-brand-info">{analysis.incidentId?.toUpperCase()}</span>
+                <span className="font-semibold text-brand-info">{analysis.incidentId ?? 'Sin incidente'}</span>
               </div>
               <div className="flex justify-between">
                 <span>Criticidad</span>

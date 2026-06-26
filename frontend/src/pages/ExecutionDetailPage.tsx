@@ -11,20 +11,42 @@ import { SurfaceCard } from '../components/common/SurfaceCard'
 export function ExecutionDetailPage() {
   const { executionId } = useParams()
   const [execution, setExecution] = useState<ExecutionDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
-      if (!executionId) return
-      const response = await getExecutionRequest(executionId)
-      setExecution(response.data)
+      if (!executionId) {
+        setError('No se encontro la ejecucion solicitada.')
+        setLoading(false)
+        return
+      }
+
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await getExecutionRequest(executionId)
+        setExecution(response.data)
+      } catch {
+        setError('No se pudo cargar el detalle de la ejecucion.')
+      } finally {
+        setLoading(false)
+      }
     }
 
     void load()
   }, [executionId])
 
-  if (!execution) {
+  if (loading) {
     return <div className="text-sm text-slate-400">Cargando detalle...</div>
   }
+
+  if (error || !execution) {
+    return <div className="text-sm text-red-500">{error ?? 'No se pudo cargar el detalle.'}</div>
+  }
+
+  const statusTone = execution.status === 'SUCCESS' ? 'green' : execution.status === 'FAILED' ? 'red' : 'amber'
+  const statusLabel = execution.status === 'SUCCESS' ? 'Exitoso' : execution.status === 'FAILED' ? 'Fallido' : 'En revision'
 
   const incident: ExecutionIncident = execution.incident ?? {
     id: execution.incidentId ?? 'unknown-incident',
@@ -51,7 +73,7 @@ export function ExecutionDetailPage() {
         <h2 className="text-4xl font-bold text-brand-blue">
           {execution.publicCode} - {execution.rpaName}
         </h2>
-        <AppBadge tone="red">Fallido</AppBadge>
+        <AppBadge tone={statusTone}>{statusLabel}</AppBadge>
         <AppBadge tone="amber">{execution.errorType}</AppBadge>
         <AppBadge tone="blue">{execution.triggerType}</AppBadge>
       </div>
@@ -68,8 +90,8 @@ export function ExecutionDetailPage() {
               ['Responsable', execution.responsible],
               ['Trigger', execution.triggerType],
               ['Escenario', execution.scenario],
-              ['Fecha inicio', '05/06/2026 14:30'],
-              ['Fecha fin', '05/06/2026 14:31'],
+              ['Fecha inicio', execution.startedAt ? new Date(execution.startedAt).toLocaleString('es-PE') : '-'],
+              ['Fecha fin', execution.finishedAt ? new Date(execution.finishedAt).toLocaleString('es-PE') : '-'],
               ['Duracion', execution.durationLabel],
             ].map(([label, value]) => (
               <div key={label}>
@@ -82,18 +104,18 @@ export function ExecutionDetailPage() {
 
         <SurfaceCard>
           <h3 className="text-2xl font-semibold text-brand-blue">Resultado de la ejecucion</h3>
-          <div className="mt-6 space-y-4 text-sm text-slate-500">
-            {[
-              ['Estado', 'Fallido'],
-              ['Total items', `${execution.totalItems}`],
-              ['Exitosos', `${execution.successItems}`],
-              ['Fallidos', `${execution.failedItems}`],
+            <div className="mt-6 space-y-4 text-sm text-slate-500">
+              {[
+                ['Estado', statusLabel],
+                ['Total items', `${execution.totalItems}`],
+                ['Exitosos', `${execution.successItems}`],
+                ['Fallidos', `${execution.failedItems}`],
               ['Codigo de error', execution.errorCode ?? '-'],
               ['Mensaje de error', execution.errorMessage ?? '-'],
             ].map(([label, value], index) => (
               <div key={label} className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-none last:pb-0">
                 <span className="font-semibold text-brand-blue">{label}:</span>
-                {index === 0 ? <AppBadge tone="red">{value}</AppBadge> : <span>{value}</span>}
+                {index === 0 ? <AppBadge tone={statusTone}>{value}</AppBadge> : <span>{value}</span>}
               </div>
             ))}
           </div>
@@ -173,11 +195,15 @@ export function ExecutionDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-brand-blue">Estado:</span>
-                <AppBadge tone="blue">En revision</AppBadge>
+                <AppBadge tone={incident.status === 'RESOLVED' ? 'green' : incident.status === 'IN_REVIEW' ? 'blue' : 'amber'}>
+                  {incident.status === 'RESOLVED' ? 'Resuelto' : incident.status === 'IN_REVIEW' ? 'En revision' : 'Pendiente'}
+                </AppBadge>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-brand-blue">Criticidad:</span>
-                <AppBadge tone="red">Alta</AppBadge>
+                <AppBadge tone={incident.severity === 'HIGH' ? 'red' : incident.severity === 'MEDIUM' ? 'amber' : 'green'}>
+                  {incident.severity === 'HIGH' ? 'Alta' : incident.severity === 'MEDIUM' ? 'Media' : 'Baja'}
+                </AppBadge>
               </div>
             </div>
             <Link
@@ -208,7 +234,7 @@ export function ExecutionDetailPage() {
               </div>
             </div>
             <Link
-              to={`/ai-analysis/${analysis.id}`}
+              to={analysis.id ? `/ai-analysis/${analysis.id}` : '/ai-analysis'}
               className="mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-brand-blue/15 px-4 py-3 text-sm font-semibold text-brand-blue transition hover:bg-brand-blue/5"
             >
               Ver analisis completo
@@ -234,7 +260,7 @@ export function ExecutionDetailPage() {
           </span>
         </Link>
         <Link
-          to={`/ai-analysis/${analysis.id}`}
+          to={analysis.id ? `/ai-analysis/${analysis.id}` : '/ai-analysis'}
           className="rounded-2xl border border-brand-blue/15 bg-white px-5 py-4 text-center text-sm font-semibold text-brand-blue transition hover:bg-brand-blue/5"
         >
           <span className="inline-flex items-center gap-2">

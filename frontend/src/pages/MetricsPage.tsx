@@ -2,6 +2,17 @@ import { useEffect, useState } from 'react'
 import { metricsSummaryRequest } from '../api/monitor.api'
 import { SurfaceCard } from '../components/common/SurfaceCard'
 
+function downloadCsv(filename: string, rows: string[][]) {
+  const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export function MetricsPage() {
   const [metrics, setMetrics] = useState<any | null>(null)
 
@@ -25,6 +36,17 @@ export function MetricsPage() {
     { title: 'Errores Detectados', value: `${summary.detected_errors}`, subtitle: 'Incidentes y fallos', tone: 'red' },
     { title: 'Tiempo Promedio', value: `${(summary.average_duration_ms / 60000).toFixed(1)} min`, subtitle: 'Por ejecucion', tone: 'amber' },
   ]
+
+  const handleExportPdf = () => {
+    window.print()
+  }
+
+  const handleExportExcel = () => {
+    downloadCsv('metricas-smart-rpa.csv', [
+      ['Indicador', 'Valor', 'Detalle'],
+      ...cards.map((card) => [card.title, card.value, card.subtitle]),
+    ])
+  }
   return (
     <div className="space-y-6">
       <div>
@@ -38,10 +60,10 @@ export function MetricsPage() {
         <select className="rounded-2xl border border-white/70 bg-white/92 px-4 py-4 text-sm shadow-soft outline-none">
           <option>RPA</option>
         </select>
-        <button className="rounded-2xl bg-red-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(239,68,68,0.16)] transition hover:-translate-y-0.5">
+        <button onClick={handleExportPdf} className="rounded-2xl bg-red-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(239,68,68,0.16)] transition hover:-translate-y-0.5">
           Exportar PDF
         </button>
-        <button className="rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(34,197,94,0.18)] transition hover:-translate-y-0.5">
+        <button onClick={handleExportExcel} className="rounded-2xl bg-emerald-500 px-5 py-4 text-sm font-semibold text-white shadow-[0_18px_34px_rgba(34,197,94,0.18)] transition hover:-translate-y-0.5">
           Exportar Excel
         </button>
       </div>
